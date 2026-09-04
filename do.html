@@ -42,11 +42,28 @@
       <li class="is-sub"><a href="#load-finding">finding</a></li>
       <li class="is-sub"><a href="#load-basic">opening</a></li>
       <li class="is-sub"><a href="#load-columns">picking columns</a></li>
+      <li><a href="#go-faster">go faster</a></li>
+      <li class="is-sub"><a href="#faster-subset">cut it down first</a></li>
+      <li class="is-sub"><a href="#faster-dask">start a Dask client</a></li>
+      <li><a href="#examine">examine the catalog</a></li>
+      <li class="is-sub"><a href="#examine-head">look at a few rows</a></li>
+      <li class="is-sub"><a href="#examine-size">find out how big it is</a></li>
+      <li class="is-sub"><a href="#examine-stats">column statistics</a></li>
+      <li class="is-sub"><a href="#examine-partition">a single partition</a></li>
+      <li><a href="#modify">modify the catalog</a></li>
+      <li class="is-sub"><a href="#modify-query">filter rows</a></li>
+      <li class="is-sub"><a href="#modify-map">apply my own function</a></li>
+      <li><a href="#nested">work with nested data</a></li>
+      <li class="is-sub"><a href="#nested-make">pack list columns</a></li>
+      <li class="is-sub"><a href="#nested-map">one value per object</a></li>
       <li><a href="#crossmatch">crossmatch</a></li>
       <li class="is-sub"><a href="#crossmatch-basic">match two catalogs</a></li>
       <li class="is-sub"><a href="#crossmatch-margins">not get wrong answers</a></li>
       <li class="is-sub"><a href="#crossmatch-how">keep unmatched rows</a></li>
       <li class="is-sub"><a href="#crossmatch-custom">use my own algorithm</a></li>
+      <li><a href="#save">save my results</a></li>
+      <li class="is-sub"><a href="#save-compute">pull it into pandas</a></li>
+      <li class="is-sub"><a href="#save-write">write a HATS catalog</a></li>
     </ol>
   </nav>
 
@@ -127,6 +144,299 @@ ztf.all_columns</code></pre>
       </div>
 
 
+    </section>
+
+    <section class="section" id="go-faster">
+      <h2>go faster<a class="anchor" href="#go-faster">#</a></h2>
+
+      <h3 id="faster-subset">cut it down first</h3>
+      <p>The single most useful habit: build your whole workflow against a small patch of sky,
+         confirm it does what you meant, then delete one line and run it on everything. A cone
+         search filters partitions <em>and</em> rows, so you are reading a handful of files
+         instead of thousands.</p>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code># While developing: one degree of sky.
+gaia = gaia.cone_search(ra=180.0, dec=10.0, radius_arcsec=3600)
+
+# When it all works, delete that line and the same code runs on the full catalog.</code></pre>
+      </div>
+
+      <p>There are other shapes when a cone doesn't fit: <code>box_search</code>,
+         <code>polygon_search</code>, <code>moc_search</code>, and <code>order_search</code>.</p>
+
+      <h3 id="faster-columns">ask for fewer columns</h3>
+      <p>Covered up in <a href="#load-columns">picking columns</a>, but it belongs here too: it is
+         usually the biggest speed-up available, and it costs one keyword argument.</p>
+
+      <h3 id="faster-dask">start a Dask client</h3>
+      <p>LSDB runs on Dask. Without a client you still get parallelism across your cores; with one
+         you get a dashboard showing exactly what is running, how much memory each worker holds,
+         and which task is the bottleneck. At a hack day the dashboard is often how you discover
+         you asked for far more data than you meant to.</p>
+
+      <div class="snippet" data-setup="none" data-verify="skip" data-skip-reason="starts a cluster">
+        <div class="snippet__bar">
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>from dask.distributed import Client
+
+client = Client(n_workers=4, threads_per_worker=1, memory_limit="auto")
+client  # displays a link to the dashboard</code></pre>
+      </div>
+
+      <p>Prefer a context manager in a script, so the cluster shuts down even if the work fails:</p>
+
+      <div class="snippet" data-setup="none" data-verify="skip" data-skip-reason="starts a cluster">
+        <div class="snippet__bar">
+          <span class="badge badge--hot">&#9889; triggers computation</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>with Client(n_workers=4, threads_per_worker=1) as client:
+    result = matched.compute()</code></pre>
+      </div>
+
+      <div class="callout">
+        <span class="callout__title">More workers is not always faster</span>
+        <p>Each worker needs enough memory to hold the partitions it is handling. Four workers with
+           room to breathe will beat sixteen that spend their time spilling to disk. If the
+           dashboard is mostly orange, you have too many workers, not too few.</p>
+      </div>
+
+      <h3 id="faster-region">read from the copy nearest you</h3>
+      <p>Catalogs are mirrored across regions and providers. <code>s3://</code> endpoints generally
+         outperform <code>https://</code>, and if you are working on a cluster that already holds a
+         local copy, use that instead of pulling across the internet at all.</p>
+
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/tutorials/performance.html">Performance guide</a>
+        <a href="https://docs.lsdb.io/en/stable/tutorials/dask_client.html">Configuring a Dask client</a>
+        <a href="https://docs.lsdb.io/en/stable/tutorials/dask-messages-guide.html">Decoding alarming Dask messages</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/scaling_workflows.html">Notebook: scaling workflows</a>
+      </div>
+    </section>
+
+    <section class="section" id="examine">
+      <h2>examine the catalog<a class="anchor" href="#examine">#</a></h2>
+
+      <h3 id="examine-head">look at a few rows</h3>
+      <p><code>head()</code> is the cheap way to see real values: it reads from the first partitions
+         that have data rather than computing everything.</p>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--hot">&#9889; triggers computation</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>gaia.head()          # a handful of rows
+gaia.head(20)</code></pre>
+      </div>
+
+      <div class="callout callout--warn">
+        <span class="callout__title">&#9888; Do not call .compute() to have a look</span>
+        <p><code>compute()</code> pulls the <em>entire</em> result into your machine's memory. On a
+           survey catalog that is not a slow operation, it is an impossible one &mdash; it will
+           exhaust your RAM and take the kernel with it. Use <code>head()</code> to look, and save
+           <code>compute()</code> for results you have already cut down.</p>
+      </div>
+
+      <h3 id="examine-size">find out how big it is</h3>
+      <p>Before you compute anything, ask what it would cost. <code>estimate_size()</code> prints a
+         report based on metadata alone &mdash; no row data is read.</p>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>gaia.npartitions     # how many files this workflow will touch
+gaia.estimate_size()</code></pre>
+      </div>
+
+      <div class="output">You selected 3/152 columns.
+You selected 2016/2016 pixels.
+Expect up to 1,812,731,847 results (100.00% of the full catalog).
+Expect up to 42.1 GiB in MEMORY.
+Expect up to 37.2 GiB on DISK.</div>
+
+      <p>That is the number worth checking before you reach for <code>compute()</code>.</p>
+
+      <h3 id="examine-stats">get column statistics without reading rows</h3>
+      <p>HATS stores per-column minimum, maximum, and null counts in the parquet footers, so LSDB
+         can report them across the whole catalog without touching a single row of data. This
+         returns immediately even on a billion-row catalog.</p>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>gaia.aggregate_column_statistics()      # min, max, null_count, row_count
+gaia.per_partition_statistics()         # the same, broken down by partition</code></pre>
+      </div>
+
+      <p>These come from the catalog's own recorded metadata, so on a catalog you have already
+         filtered they describe what was there originally &mdash; LSDB warns you when that
+         happens.</p>
+
+      <h3 id="examine-partition">work with a single partition</h3>
+      <p>One partition is a normal, laptop-sized dataframe. It is the fastest way to try something
+         out on real data before committing to the whole sky.</p>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--hot">&#9889; triggers computation</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>one = gaia.partitions[0].compute()      # by position
+
+gaia.get_healpix_pixels()[:3]           # or address a pixel directly
+gaia.get_partition(2, 108).compute()    # order 2, pixel 108</code></pre>
+      </div>
+
+      <h3 id="examine-plot">see where the data is</h3>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--hot">&#9889; triggers computation</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>gaia.plot_pixels()      # the partitioning itself
+gaia.plot_coverage()    # which sky this catalog covers
+gaia.plot_points()      # the objects (cut the catalog down first)</code></pre>
+      </div>
+
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/reference/catalog_inspection.html">Inspection reference</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/catalog_object.html">Notebook: the Catalog object</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/plotting.html">Notebook: plotting</a>
+      </div>
+    </section>
+
+    <section class="section" id="modify">
+      <h2>modify the catalog<a class="anchor" href="#modify">#</a></h2>
+
+      <h3 id="modify-query">filter rows</h3>
+      <p><code>query()</code> takes a pandas-style expression string and stays lazy. Column names
+         that aren't valid Python identifiers go in backticks; <code>@variable</code> is not
+         supported, so interpolate with an f-string instead.</p>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>bright = gaia.query("phot_g_mean_mag &lt; 19")
+
+limit = 18.5
+brighter = gaia.query(f"phot_g_mean_mag &lt; {limit}")</code></pre>
+      </div>
+
+      <h3 id="modify-map">apply your own function</h3>
+      <p><code>map_partitions</code> hands your function one partition at a time as a pandas
+         dataframe, in parallel, across the whole catalog. Dask works out the resulting columns by
+         running your function on an empty frame; pass <code>meta</code> explicitly when that
+         guess comes out wrong, or when running your function even once is expensive.</p>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>def add_flux(df):
+    df["flux"] = 10 ** (-0.4 * df["phot_g_mean_mag"])
+    return df
+
+with_flux = gaia.map_partitions(add_flux)</code></pre>
+      </div>
+
+      <p>When your function is naturally per-object rather than per-partition,
+         <code>map_rows</code> is the friendlier option &mdash; it handles the packing and
+         unpacking for you, including <a href="#nested">nested columns</a>.</p>
+
+      <div class="callout">
+        <span class="callout__title">Everything returns a new catalog</span>
+        <p>Filters and maps never modify in place; each returns a new lazy <code>Catalog</code>
+           built on the previous one. Chain them freely &mdash; nothing is read until you compute.</p>
+      </div>
+
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/reference/catalog_filtering.html">Filtering reference</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/row_filtering.html">Notebook: row filtering</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/map_partitions.html">Notebook: map_partitions</a>
+      </div>
+    </section>
+
+    <section class="section" id="nested">
+      <h2>work with nested data<a class="anchor" href="#nested">#</a></h2>
+
+      <p>Light curves, spectra, and detection histories are many measurements per object. A
+         <em>nested column</em> holds a whole sub-table inside each row, so one row stays one
+         object no matter how many epochs it has. See
+         <a href="ask.html#what-is-hats">Ask</a> for what that means for the data model.</p>
+
+      <h3 id="nested-make">pack list columns into a nested column</h3>
+      <p>Plenty of catalogs ship light curves as parallel <em>list</em> columns &mdash; ZTF DR22
+         gives you <code>hmjd</code>, <code>mag</code> and <code>magerr</code> as arrays.
+         <code>nest_lists</code> folds those into one nested column you can work with as a unit.</p>
+
+      <div class="snippet" data-setup="none" data-verify="run">
+        <div class="snippet__bar">
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>lc = lsdb.open_catalog(
+    "https://data.lsdb.io/hats/ztf_dr22/ztf_lc",
+    columns=["objectid", "objra", "objdec", "nepochs", "hmjd", "mag", "magerr"],
+)
+
+lc = lc.nest_lists(
+    base_columns=["objectid", "objra", "objdec", "nepochs"],
+    list_columns=["hmjd", "mag", "magerr"],
+    name="lc",
+)
+lc.nested_columns          # ['lc']</code></pre>
+      </div>
+
+      <h3 id="nested-look">look inside one</h3>
+
+      <div class="snippet" data-setup="lc-nested" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--hot">&#9889; triggers computation</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>rows = lc.head(2)
+rows["lc"].nest.columns    # ['hmjd', 'mag', 'magerr']
+rows["lc"].nest.to_flat()  # one row per epoch instead of per object</code></pre>
+      </div>
+
+      <h3 id="nested-map">compute one value per object</h3>
+      <p>This is the common shape: reduce each object's light curve to a number, and keep it
+         beside the object. <code>map_rows</code> passes each row in, nested column included.</p>
+
+      <div class="snippet" data-setup="lc-nested" data-verify="run">
+        <div class="snippet__bar">
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>import numpy as np
+
+mean_mags = lc.map_rows(
+    lambda row: float(np.nanmean(row["lc"]["mag"])),
+    columns=["lc"],
+    meta={"mean_mag": "float64"},
+    output_names="mean_mag",
+    append_columns=True,      # keep the original columns alongside the result
+)</code></pre>
+      </div>
+
+      <p>Two related shapes worth knowing: <code>join_nested</code> attaches another catalog's rows
+         as a nested column, and <code>crossmatch_nested</code> does the same for crossmatch
+         results &mdash; so a many-to-one match stays one row per object.</p>
+
+      <div class="links">
+        <a href="https://nested-pandas.readthedocs.io/en/stable/">nested-pandas documentation</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/nestedframe.html">Notebook: nested frames</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/timeseries.html">Notebook: time series</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/ztf-alerts-sne.html">Notebook: ZTF supernova alerts</a>
+      </div>
     </section>
 
     <section class="section" id="crossmatch">
@@ -231,6 +541,54 @@ matched = ztf.crossmatch(gaia, algorithm=MyMatch)</code></pre>
       </div>
 
 
+    </section>
+
+    <section class="section" id="save">
+      <h2>save my results<a class="anchor" href="#save">#</a></h2>
+
+      <h3 id="save-compute">pull it into pandas</h3>
+      <p>Once the result is genuinely small, <code>compute()</code> gives you an ordinary
+         in-memory dataframe to plot, fit, or hand to another library.</p>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--hot">&#9889; triggers computation</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>result = bright.cone_search(ra=180.0, dec=10.0, radius_arcsec=600).compute()
+result.to_csv("my_result.csv")</code></pre>
+      </div>
+
+      <h3 id="save-write">write a HATS catalog</h3>
+      <p>When the result is too big for memory, or you want to pick up where you left off
+         tomorrow, write it back out as a HATS catalog. It reopens with
+         <code>open_catalog</code> like any other, and it is partitioned, so the next workflow
+         starts fast.</p>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="skip" data-skip-reason="writes to disk">
+        <div class="snippet__bar">
+          <span class="badge badge--hot">&#9889; triggers computation</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>bright.write_catalog(
+    "./my_catalogs/bright_gaia",
+    catalog_name="bright_gaia",
+    overwrite=True,
+)
+
+again = lsdb.open_catalog("./my_catalogs/bright_gaia")</code></pre>
+      </div>
+
+      <div class="callout">
+        <span class="callout__title">This is the checkpoint you want before lunch</span>
+        <p>A crossmatch that took twenty minutes should not have to run twice. Writing the result
+           costs one line, and reopening it is instant.</p>
+      </div>
+
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.catalog.Catalog.write_catalog.html">write_catalog reference</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/exporting_results.html">Notebook: exporting results</a>
+      </div>
     </section>
 
     <footer class="footer">
