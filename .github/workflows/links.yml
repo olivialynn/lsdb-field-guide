@@ -1,0 +1,19 @@
+name: Check links
+
+# External docs move around; this catches rot without blocking day-to-day edits.
+on:
+  schedule:
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --verbose './**/*.html' './**/*.md'
+          fail: true

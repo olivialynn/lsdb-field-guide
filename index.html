@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Do — LSDB Field Guide</title>
+<meta name="description" content="Short, copy-pasteable recipes for common LSDB tasks: loading catalogs, crossmatching, and getting results fast.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="topbar__brand" href="index.html">LSDB <span>Field Guide</span></a>
+  <nav class="topbar__nav">
+    <a href="index.html" aria-current="page">Do</a>
+    <a href="ask.html">Ask</a>
+  </nav>
+</header>
+
+<div class="shell">
+
+  <nav class="sidebar" aria-label="On this page">
+    <h2>I want to&hellip;</h2>
+    <ol>
+      <li><a href="#start">get something on screen</a></li>
+      <li><a href="#load-a-catalog">load a catalog</a></li>
+      <li class="is-sub"><a href="#load-basic">open one</a></li>
+      <li class="is-sub"><a href="#load-finding">find one to open</a></li>
+      <li class="is-sub"><a href="#load-columns">pick columns</a></li>
+      <li><a href="#crossmatch">crossmatch</a></li>
+      <li class="is-sub"><a href="#crossmatch-basic">match two catalogs</a></li>
+      <li class="is-sub"><a href="#crossmatch-margins">not get wrong answers</a></li>
+      <li class="is-sub"><a href="#crossmatch-how">keep unmatched rows</a></li>
+      <li class="is-sub"><a href="#crossmatch-custom">use my own algorithm</a></li>
+    </ol>
+  </nav>
+
+  <main class="content">
+
+    <div class="pagehead">
+      <h1>I want to&hellip;</h1>
+      <p>Copy-pasteable recipes for the things people actually do in their first hour with LSDB.
+         Every snippet runs as written. Looking for the concepts underneath? Those live on
+         <a href="ask.html">Ask</a>.</p>
+    </div>
+
+    <section class="starter" id="start">
+      <h2>Five minutes to a plot</h2>
+      <p>No catalog downloads, no cluster. This works on a laptop over a conference wifi connection.</p>
+
+      <div class="snippet" data-setup="none" data-verify="skip" data-skip-reason="installs packages">
+        <div class="snippet__bar"><span class="snippet__label">shell</span></div>
+        <pre><code>pip install lsdb</code></pre>
+      </div>
+
+      <div class="snippet" data-setup="none" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--hot">&#9889; triggers computation</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>import lsdb
+
+gaia = lsdb.open_catalog(
+    "https://data.lsdb.io/hats/gaia_dr3/gaia",
+    columns=["ra", "dec", "phot_g_mean_mag"],
+)
+
+# One square degree is small enough to compute immediately.
+patch = gaia.cone_search(ra=180.0, dec=10.0, radius_arcsec=3600)
+patch.plot_points()</code></pre>
+      </div>
+
+      <p style="margin-bottom:0">That is the whole shape of LSDB: open something enormous lazily,
+         cut it down to something small, then compute.</p>
+    </section>
+
+    <section class="section" id="load-a-catalog">
+      <h2>load a catalog<a class="anchor" href="#load-a-catalog">#</a></h2>
+
+      <h3 id="load-basic">Open one</h3>
+      <p><code>open_catalog</code> reads the catalog's metadata and nothing else. You get back a
+         <code>Catalog</code> that knows its columns, types, and partitioning, but holds no rows.</p>
+
+      <div class="snippet" data-setup="none" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--lazy">lazy</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>import lsdb
+
+ztf = lsdb.open_catalog(
+    "https://data.lsdb.io/hats/ztf_dr14/ztf_object",
+    columns=["ra", "dec", "ps1_objid", "mean_mag_r"],
+)
+ztf</code></pre>
+      </div>
+
+      <p>Catalogs published as a <em>collection</em> bundle their margin and index catalogs alongside
+         the main one. Open the collection and the margin comes with it, attached at
+         <code>.margin</code> &mdash; which matters more than it sounds
+         (<a href="#crossmatch-margins">see below</a>).</p>
+
+      <div class="snippet" data-setup="none" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--lazy">lazy</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>gaia = lsdb.open_catalog(
+    "https://data.lsdb.io/hats/gaia_dr3/gaia",
+    margin_cache="https://data.lsdb.io/hats/gaia_dr3/gaia_10arcs",
+    columns=["ra", "dec", "source_id", "phot_g_mean_mag"],
+)
+gaia.margin</code></pre>
+      </div>
+
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.open_catalog.html">open_catalog reference</a>
+        <a href="https://docs.lsdb.io/en/stable/getting-started.html">Getting started</a>
+      </div>
+
+      <h3 id="load-finding">Find one to open</h3>
+      <p><a href="https://data.lsdb.io/">data.lsdb.io</a> is the catalog browser: Gaia, ZTF, SDSS,
+         2MASS, DES, and more, each with its row count, size on disk, and a copy-paste URL.
+         Catalogs are mirrored in several regions &mdash; grab the one nearest you, and prefer an
+         <code>s3://</code> endpoint over <code>https://</code> when you have one.</p>
+
+      <div class="links">
+        <a href="https://data.lsdb.io/">Browse data.lsdb.io</a>
+        <a href="https://docs.lsdb.io/en/stable/data-access/datalsdb.html">Reading the catalog browser</a>
+        <a href="https://docs.lsdb.io/en/stable/data-access/external.html">Other data centers</a>
+      </div>
+
+      <h3 id="load-columns">Pick columns</h3>
+      <p>Every catalog defines a set of <em>default columns</em>, loaded when you don't ask for
+         specific ones. That default exists to stop you accidentally pulling two hundred columns
+         across the network. Name what you need and the rest is never read.</p>
+
+      <div class="snippet" data-setup="ztf-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--lazy">lazy</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code># What am I getting by default, and what else is there?
+ztf.columns
+ztf.all_columns</code></pre>
+      </div>
+
+      <div class="callout">
+        <span class="callout__title">This is the cheapest speed-up available</span>
+        <p>Column selection is pushed down into the parquet reader, so unselected columns cost you
+           nothing &mdash; not bandwidth, not memory. It is usually a bigger win than anything you
+           will do with a Dask cluster.</p>
+      </div>
+    </section>
+
+    <section class="section" id="crossmatch">
+      <h2>crossmatch<a class="anchor" href="#crossmatch">#</a></h2>
+
+      <h3 id="crossmatch-basic">Match two catalogs</h3>
+      <p>Crossmatching is positional and lazy. LSDB aligns the two catalogs' partitions, then
+         matches within each overlapping pair &mdash; so nothing is loaded until you compute.</p>
+
+      <div class="snippet" data-setup="ztf-and-gaia" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--lazy">lazy</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>matched = ztf.crossmatch(
+    gaia,
+    radius_arcsec=1.0,
+    n_neighbors=1,
+)
+matched.head()</code></pre>
+      </div>
+
+      <div class="callout callout--warn" id="crossmatch-margins">
+        <span class="callout__title">&#9888; Crossmatch without a margin and you get wrong answers, silently</span>
+        <p>Objects near a partition boundary have their true nearest neighbour in the
+           <em>next</em> partition. Without a margin catalog on the right-hand side, those matches
+           are simply missed &mdash; no error, no warning, just a result that is quietly incomplete
+           along every partition edge.</p>
+        <p><code>require_right_margin</code> defaults to <code>False</code>, so LSDB will not stop
+           you. Either open the right catalog as a collection, or pass its
+           <code>margin_cache</code> explicitly &mdash; then turn the check on so it fails loudly
+           if the margin ever goes missing.</p>
+      </div>
+
+      <div class="snippet" data-setup="ztf-and-gaia" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--lazy">lazy</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>matched = ztf.crossmatch(
+    gaia,                        # opened with margin_cache=... above
+    radius_arcsec=1.0,
+    require_right_margin=True,   # raise instead of quietly under-matching
+)</code></pre>
+      </div>
+
+      <h3 id="crossmatch-how">Keep unmatched rows</h3>
+      <p><code>how="inner"</code> (the default) keeps only objects that matched.
+         <code>how="left"</code> keeps every row of the left catalog, filling in nulls where
+         nothing matched &mdash; useful when the question is "which of my objects have no
+         counterpart?"</p>
+
+      <div class="snippet" data-setup="ztf-and-gaia" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--lazy">lazy</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>everything = ztf.crossmatch(gaia, radius_arcsec=1.0, how="left")
+
+# Name the columns yourself when both catalogs share column names.
+labelled = ztf.crossmatch(gaia, radius_arcsec=1.0, suffixes=("_ztf", "_gaia"))</code></pre>
+      </div>
+
+      <div class="callout">
+        <span class="callout__title">There is no right or outer join</span>
+        <p><code>how</code> accepts <code>"inner"</code> and <code>"left"</code> only. For the
+           mirror of a left join, swap which catalog you call <code>.crossmatch()</code> on.</p>
+      </div>
+
+      <h3 id="crossmatch-custom">Use my own algorithm</h3>
+      <p>The default is a k-d tree nearest-neighbour match. To match on something other than sky
+         position &mdash; colour, proper motion, a probabilistic score &mdash; subclass
+         <code>AbstractCrossmatchAlgorithm</code> and hand it over.</p>
+
+      <div class="snippet" data-setup="ztf-and-gaia" data-verify="skip" data-skip-reason="illustrative subclass, not a runnable algorithm">
+        <div class="snippet__bar">
+          <span class="badge badge--lazy">lazy</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>from lsdb import AbstractCrossmatchAlgorithm
+
+class MyMatch(AbstractCrossmatchAlgorithm):
+    def perform_crossmatch(self):
+        ...  # return matched indices and any extra columns
+
+matched = ztf.crossmatch(gaia, algorithm=MyMatch)</code></pre>
+      </div>
+
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.catalog.Catalog.crossmatch.html">crossmatch reference</a>
+        <a href="https://docs.lsdb.io/en/stable/tutorials/margins.html">Margins, in depth</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/crossmatching.html">Notebook: crossmatching</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/des-gaia.html">Notebook: DES &times; Gaia</a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>Snippets written against LSDB 0.10. Something wrong or out of date?
+         <a href="https://github.com/olivialynn/lsdb-field-guide/issues">Open an issue</a>.</p>
+    </footer>
+
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+</body>
+</html>

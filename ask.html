@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask — LSDB Field Guide</title>
+<meta name="description" content="Short answers to the foundational questions people ask about HATS and LSDB.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="topbar__brand" href="index.html">LSDB <span>Field Guide</span></a>
+  <nav class="topbar__nav">
+    <a href="index.html">Do</a>
+    <a href="ask.html" aria-current="page">Ask</a>
+  </nav>
+</header>
+
+<div class="shell">
+
+  <nav class="sidebar" aria-label="On this page">
+    <h2>Questions</h2>
+    <ol>
+      <li><a href="#what-is-hats">What is HATS?</a></li>
+      <li><a href="#more-help">Don't see your question?</a></li>
+    </ol>
+  </nav>
+
+  <main class="content">
+
+    <div class="pagehead">
+      <h1>Questions people ask</h1>
+      <p>Short answers to the things that come up mid-session. Want to get something running
+         instead? Start with <a href="index.html">Do</a>.</p>
+    </div>
+
+    <section class="section" id="what-is-hats">
+      <h2>What is HATS?<a class="anchor" href="#what-is-hats">#</a></h2>
+
+      <p><strong>HATS</strong> &mdash; Hierarchical Adaptive Tiling Scheme &mdash; is the file format
+         LSDB reads. It is a way of splitting a sky catalog into files such that
+         <em>objects near each other on the sky end up in the same file</em>.</p>
+
+      <h3>It starts with HEALPix</h3>
+      <p>HEALPix divides the sphere into 12 equal-area base tiles. Split each into four, and you
+         have 48. Split again: 192. How many times you have split is the tile's <em>order</em>.
+         Every tile has an order and a pixel number, and that pair names it uniquely.</p>
+
+      <h3>The "adaptive" part is the good part</h3>
+      <p>Sky catalogs are wildly uneven &mdash; the Galactic plane holds orders of magnitude more
+         sources than the poles. Tiling at one fixed order would give you some files with a few
+         thousand rows and others with tens of millions.</p>
+      <p>So HATS varies the order across the sky: dense regions get subdivided further, sparse
+         regions stay coarse, until every tile holds roughly the same number of rows.</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 660 330" role="img" aria-labelledby="hats-fig-title">
+          <title id="hats-fig-title">One fixed order gives unbalanced tiles; HATS subdivides dense regions until every tile holds a similar number of rows.</title>
+
+          <text x="20" y="30" style="fill: var(--muted); font: 600 13px var(--sans)">One fixed order</text>
+          <text x="20" y="48" style="fill: var(--muted); font: 12px var(--sans)">wildly unbalanced files</text>
+
+          <g style="stroke: var(--border); fill: none; stroke-width: 1.5">
+            <rect x="20" y="62" width="240" height="240" style="stroke: var(--muted)"/>
+            <line x1="140" y1="62" x2="140" y2="302"/>
+            <line x1="20" y1="182" x2="260" y2="182"/>
+          </g>
+          <rect x="141" y="63" width="118" height="118" style="fill: var(--warn-bd); opacity: 0.35"/>
+          <g style="fill: var(--text); font: 12px var(--mono); text-anchor: middle">
+            <text x="80" y="128">12k</text>
+            <text x="200" y="128">9M</text>
+            <text x="80" y="248">40k</text>
+            <text x="200" y="248">2k</text>
+          </g>
+
+          <g style="stroke: var(--muted); fill: none; stroke-width: 1.5">
+            <line x1="290" y1="182" x2="360" y2="182"/>
+            <path d="M352 175 L360 182 L352 189"/>
+          </g>
+
+          <text x="390" y="30" style="fill: var(--muted); font: 600 13px var(--sans)">HATS, adaptive</text>
+          <text x="390" y="48" style="fill: var(--muted); font: 12px var(--sans)">every file about the same size</text>
+
+          <g style="stroke: var(--border); fill: none; stroke-width: 1.5">
+            <rect x="390" y="62" width="240" height="240" style="stroke: var(--muted)"/>
+            <line x1="510" y1="62" x2="510" y2="302"/>
+            <line x1="390" y1="182" x2="630" y2="182"/>
+            <line x1="570" y1="62" x2="570" y2="182"/>
+            <line x1="510" y1="122" x2="630" y2="122"/>
+            <line x1="540" y1="62" x2="540" y2="122"/>
+            <line x1="510" y1="92" x2="570" y2="92"/>
+          </g>
+          <g style="fill: var(--accent); opacity: 0.16">
+            <rect x="511" y="63" width="118" height="118"/>
+          </g>
+          <g style="fill: var(--text); font: 12px var(--mono); text-anchor: middle">
+            <text x="450" y="128">12k</text>
+            <text x="450" y="248">40k</text>
+            <text x="570" y="248">2k</text>
+          </g>
+          <g style="fill: var(--muted); font: 9px var(--mono); text-anchor: middle">
+            <text x="525" y="82">9k</text>
+            <text x="555" y="82">9k</text>
+            <text x="525" y="112">9k</text>
+            <text x="555" y="112">9k</text>
+            <text x="600" y="96">11k</text>
+            <text x="540" y="156">10k</text>
+            <text x="600" y="156">10k</text>
+          </g>
+        </svg>
+        <figcaption>The dense tile keeps splitting until it looks like everything else. This is why
+          a whole-sky operation in LSDB parallelizes evenly instead of stalling on one enormous
+          partition.</figcaption>
+      </figure>
+
+      <h3>What it looks like on disk</h3>
+      <p>A HATS catalog is a directory of parquet files named by order and pixel, plus metadata
+         describing the partitioning. Nothing exotic &mdash; you can open any single file with
+         pandas.</p>
+
+      <div class="snippet" data-setup="none" data-verify="skip" data-skip-reason="illustrative directory listing">
+        <div class="snippet__bar"><span class="snippet__label">on disk</span></div>
+        <pre><code>gaia/
+├── properties              # what this catalog is
+├── partition_info.csv      # which pixels exist, at which orders
+└── dataset/
+    ├── Norder=2/Dir=0/Npix=51.parquet     # a sparse patch, split twice
+    ├── Norder=5/Dir=0/Npix=2341.parquet   # a dense patch, split five times
+    └── ...</code></pre>
+      </div>
+
+      <p>Because the partitioning is spatial, LSDB can answer "everything within one degree of
+         here" by reading three files instead of thirty thousand &mdash; and can crossmatch two
+         catalogs by pairing up tiles that overlap on the sky.</p>
+
+      <div class="links">
+        <a href="https://hats.readthedocs.io/en/stable/">HATS documentation</a>
+        <a href="https://docs.lsdb.io/en/stable/data-access/hats.html">The format, in detail</a>
+        <a href="https://healpix.jpl.nasa.gov/">What HEALPix is</a>
+      </div>
+    </section>
+
+    <section class="section" id="more-help">
+      <h2>Don't see your question here?<a class="anchor" href="#more-help">#</a></h2>
+      <p>The LINCC Frameworks team is friendly and genuinely wants to hear from you &mdash;
+         especially if you have a gnarly dataset.</p>
+      <ul>
+        <li><strong>Drop-in office hours</strong>, Fridays 10&ndash;11am US Pacific. Bring whatever
+            you're stuck on, or just work alongside the people who build this.</li>
+        <li><strong>Slack:</strong> <a href="https://lsstc.slack.com/archives/C04610PQW9F">#lincc-frameworks-lsdb</a>
+            on LSSTC Slack, where most day-to-day discussion happens.</li>
+        <li><strong>Bugs and feature ideas:</strong>
+            <a href="https://github.com/astronomy-commons/lsdb/issues/new">open an LSDB issue</a>.</li>
+        <li><strong>Rubin HATS data questions:</strong> the
+            <a href="https://community.lsst.org/c/support/data/34">LSST Community Forum</a>.</li>
+      </ul>
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/contact.html">All the ways to reach the team</a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>Written against LSDB 0.10. Something wrong or out of date?
+         <a href="https://github.com/olivialynn/lsdb-field-guide/issues">Open an issue</a>.</p>
+    </footer>
+
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+/* LSDB Field Guide — one hand-written stylesheet, no build step. */
+
+:root {
+  --bg:        #fbfaf8;
+  --surface:   #ffffff;
+  --text:      #1c1c1a;
+  --muted:     #5f5e59;
+  --border:    #e4e1da;
+  --accent:    #1f5f8b;
+  --accent-bg: #eaf2f8;
+  --code-bg:   #f5f3ef;
+  --code-text: #23252a;
+  --warn-bg:   #fdf3e7;
+  --warn-bd:   #d98324;
+  --warn-tx:   #7a4a10;
+  --lazy-bg:   #eef0ee;
+  --lazy-tx:   #4f5450;
+  --hot-bg:    #fbeadb;
+  --hot-tx:    #8a4b12;
+  --radius: 7px;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #16171a;
+    --surface:   #1d1f23;
+    --text:      #e8e6e1;
+    --muted:     #9b988f;
+    --border:    #2f323a;
+    --accent:    #84b6dd;
+    --accent-bg: #1a2530;
+    --code-bg:   #202329;
+    --code-text: #e2e0da;
+    --warn-bg:   #2b2116;
+    --warn-bd:   #c07a2a;
+    --warn-tx:   #f0c088;
+    --lazy-bg:   #24272c;
+    --lazy-tx:   #9aa0a2;
+    --hot-bg:    #33241a;
+    --hot-tx:    #e0a065;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- top bar ---------- */
+
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: baseline; gap: 1.5rem;
+  padding: 0.85rem 1.5rem;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+.topbar__brand { font-weight: 650; letter-spacing: -0.01em; text-decoration: none; color: var(--text); }
+.topbar__brand span { color: var(--muted); font-weight: 400; }
+.topbar__nav { margin-left: auto; display: flex; gap: 0.4rem; }
+.topbar__nav a {
+  padding: 0.3rem 0.85rem; border-radius: 100px; text-decoration: none;
+  color: var(--muted); font-weight: 550; font-size: 0.95rem;
+}
+.topbar__nav a:hover { color: var(--text); background: var(--accent-bg); }
+.topbar__nav a[aria-current="page"] { color: var(--accent); background: var(--accent-bg); }
+
+/* ---------- layout ---------- */
+
+.shell {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: 3rem;
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 6rem;
+}
+
+.sidebar { position: sticky; top: 4.5rem; align-self: start; max-height: calc(100vh - 6rem); overflow-y: auto; }
+.sidebar h2 {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+  color: var(--muted); margin: 0 0 0.75rem;
+}
+.sidebar ol { list-style: none; margin: 0; padding: 0; }
+.sidebar li { margin: 0; }
+.sidebar a {
+  display: block; padding: 0.3rem 0 0.3rem 0.75rem;
+  border-left: 2px solid var(--border);
+  color: var(--muted); text-decoration: none; font-size: 0.92rem;
+}
+.sidebar a:hover { color: var(--text); }
+.sidebar a.is-active { color: var(--accent); border-left-color: var(--accent); font-weight: 550; }
+.sidebar .is-sub a { padding-left: 1.5rem; font-size: 0.86rem; }
+
+.content { min-width: 0; }
+
+/* ---------- page head ---------- */
+
+.pagehead { margin-bottom: 2.5rem; }
+.pagehead h1 { font-size: 2rem; letter-spacing: -0.02em; margin: 0 0 0.4rem; }
+.pagehead p { color: var(--muted); margin: 0; max-width: 42rem; }
+
+/* ---------- sections ---------- */
+
+.section { padding-top: 1rem; margin-bottom: 3.5rem; }
+.section > h2 {
+  font-size: 1.4rem; letter-spacing: -0.015em; margin: 0 0 0.6rem;
+  padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+}
+.section h3 { font-size: 1rem; margin: 2rem 0 0.5rem; }
+.section p { max-width: 44rem; }
+.section ul { max-width: 44rem; }
+
+.anchor { color: var(--border); text-decoration: none; font-weight: 400; margin-left: 0.4rem; }
+.section > h2:hover .anchor { color: var(--accent); }
+
+/* ---------- snippets ---------- */
+
+.snippet { margin: 1rem 0 1.25rem; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+.snippet__bar {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.4rem 0.6rem 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.snippet__label { font-size: 0.8rem; color: var(--muted); }
+.snippet pre { margin: 0; padding: 0.9rem 1rem; overflow-x: auto; background: var(--code-bg); }
+.snippet code { font: 0.86rem/1.65 var(--mono); color: var(--code-text); }
+
+.copy {
+  margin-left: auto; border: 1px solid var(--border); background: var(--surface);
+  color: var(--muted); border-radius: 5px; padding: 0.2rem 0.55rem;
+  font: 0.76rem var(--sans); cursor: pointer;
+}
+.copy:hover { color: var(--text); border-color: var(--accent); }
+.copy.is-done { color: var(--accent); border-color: var(--accent); }
+
+.output {
+  margin: -0.9rem 0 1.25rem; padding: 0.7rem 1rem;
+  border: 1px solid var(--border); border-top: 0;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: var(--bg); color: var(--muted);
+  font: 0.8rem/1.55 var(--mono); white-space: pre; overflow-x: auto;
+}
+
+/* ---------- badges ---------- */
+
+.badge {
+  display: inline-block; padding: 0.1rem 0.5rem; border-radius: 100px;
+  font: 550 0.72rem/1.5 var(--sans); letter-spacing: 0.01em; white-space: nowrap;
+}
+.badge--lazy { background: var(--lazy-bg); color: var(--lazy-tx); }
+.badge--hot  { background: var(--hot-bg);  color: var(--hot-tx); }
+
+/* ---------- callouts ---------- */
+
+.callout {
+  margin: 1.5rem 0; padding: 0.9rem 1.1rem;
+  border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: var(--radius); background: var(--surface);
+}
+.callout p:first-child { margin-top: 0; }
+.callout p:last-child { margin-bottom: 0; }
+.callout__title { font-weight: 650; display: block; margin-bottom: 0.3rem; }
+.callout--warn { background: var(--warn-bg); border-color: var(--warn-bd); border-left-width: 3px; color: var(--warn-tx); }
+.callout--warn .callout__title { color: var(--warn-tx); }
+.callout--warn code { background: color-mix(in srgb, var(--warn-bd) 18%, transparent); }
+
+/* ---------- links out ---------- */
+
+.links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem; }
+.links a {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.3rem 0.7rem; border: 1px solid var(--border); border-radius: 100px;
+  background: var(--surface); color: var(--muted);
+  font-size: 0.83rem; text-decoration: none;
+}
+.links a:hover { color: var(--accent); border-color: var(--accent); }
+.links a::before { content: "→"; opacity: 0.55; }
+.links a.link--nb::before { content: "◆"; }
+
+/* ---------- starter strip ---------- */
+
+.starter {
+  margin-bottom: 3rem; padding: 1.25rem 1.4rem;
+  border: 1px solid var(--accent); border-radius: var(--radius);
+  background: var(--accent-bg);
+}
+.starter h2 { margin: 0 0 0.2rem; font-size: 1.1rem; }
+.starter > p { margin: 0 0 0.9rem; color: var(--muted); font-size: 0.92rem; }
+.starter .snippet { background: var(--surface); }
+
+/* ---------- cards (Ask page) ---------- */
+
+.figure { margin: 1.5rem 0; }
+.figure svg { display: block; width: 100%; height: auto; }
+.figure figcaption { margin-top: 0.6rem; color: var(--muted); font-size: 0.85rem; }
+
+/* ---------- inline bits ---------- */
+
+a { color: var(--accent); }
+p code, li code, td code {
+  background: var(--code-bg); padding: 0.1em 0.35em;
+  border-radius: 4px; font: 0.88em var(--mono);
+}
+
+.footer { border-top: 1px solid var(--border); padding-top: 1.5rem; color: var(--muted); font-size: 0.9rem; }
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 52rem) {
+  .shell { grid-template-columns: 1fr; gap: 1.5rem; padding-top: 1.25rem; }
+  .sidebar { position: static; max-height: none; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+  .sidebar ol { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .sidebar a { border-left: 0; padding: 0.25rem 0.6rem; border: 1px solid var(--border); border-radius: 100px; }
+  .sidebar a.is-active { border-color: var(--accent); }
+  .sidebar .is-sub { display: none; }
+}
