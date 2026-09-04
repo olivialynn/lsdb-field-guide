@@ -147,6 +147,29 @@ body {
 
 .content { min-width: 0; }
 
+/* Start has no sidebar: one narrower column, centred. */
+.shell--solo { grid-template-columns: minmax(0, 1fr); max-width: 48rem; }
+
+/* ---------- doors into Do and Ask ---------- */
+
+.doors { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin: 2.75rem 0 3rem; }
+.door {
+  padding: 1.15rem 1.3rem; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+}
+.door h2 { margin: 0 0 0.45rem; font-size: 1.15rem; letter-spacing: -0.01em; }
+.door h2 a { text-decoration: none; }
+.door > p { margin: 0 0 0.85rem; color: var(--muted); font-size: 0.92rem; }
+.door ul { margin: 0; padding: 0; list-style: none; }
+.door li { margin-bottom: 0.3rem; }
+.door li a { color: var(--muted); font-size: 0.9rem; text-decoration: none; }
+.door li a::before { content: "\2192"; opacity: 0.5; margin-right: 0.4rem; }
+.door li a:hover { color: var(--accent); }
+
+@media (max-width: 40rem) {
+  .doors { grid-template-columns: 1fr; }
+}
+
 /* ---------- page head ---------- */
 
 .pagehead { margin-bottom: 2.5rem; }

@@ -12,10 +12,15 @@ the API — [docs.lsdb.io](https://docs.lsdb.io) already does that well. This ex
 person who sat down an hour ago wanting to do some science, and would rather not spend
 that hour reading.
 
-Two pages:
+Three pages:
 
-- **Do** (`index.html`) — copy-pasteable recipes, phrased as "I want to…"
+- **Start** (`index.html`) — what this is, and one snippet that gets a plot on screen
+- **Do** (`do.html`) — copy-pasteable recipes, phrased as "I want to…"
 - **Ask** (`ask.html`) — short answers to foundational questions, phrased as questions
+
+Start exists so that Do can open straight into "I want to…" items. When the starter
+lived on Do, you had to scroll past it before seeing anything that completed the
+sentence in the heading.
 
 It is also distinct from the [per-event tutorial repos](https://docs.lsdb.io/en/stable/tutorials.html):
 those are event-scoped and disposable, this one outlives them.

@@ -34,6 +34,14 @@ def check() -> list[str]:
             if href not in pages:
                 problems.append(f"{name}: links to missing page {href}")
 
+        # Cross-page deep links are the ones pasted into Slack; a fragment that
+        # points at nothing fails silently in the browser.
+        for target, fragment in re.findall(r'href="([^"#:]+\.html)#([^"]+)"', html):
+            if target not in pages:
+                continue
+            if f'id="{fragment}"' not in pages[target]:
+                problems.append(f"{name}: links to {target}#{fragment}, which does not exist")
+
         for src in re.findall(r'(?:src|href)="(assets/[^"]+)"', html):
             if not (ROOT / src).exists():
                 problems.append(f"{name}: missing asset {src}")
