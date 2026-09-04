@@ -177,12 +177,15 @@ matched.head()</code></pre>
         <span class="callout__title">&#9888; Crossmatch without a margin and you get wrong answers, silently</span>
         <p>Objects near a partition boundary have their true nearest neighbour in the
            <em>next</em> partition. Without a margin catalog on the right-hand side, those matches
-           are simply missed &mdash; no error, no warning, just a result that is quietly incomplete
-           along every partition edge.</p>
-        <p><code>require_right_margin</code> defaults to <code>False</code>, so LSDB will not stop
-           you. Either open the right catalog as a collection, or pass its
-           <code>margin_cache</code> explicitly &mdash; then turn the check on so it fails loudly
-           if the margin ever goes missing.</p>
+           are simply missed, and your result is incomplete along every partition edge.</p>
+        <p>LSDB warns you &mdash; <em>&ldquo;Right catalog does not have a margin cache. Results may
+           be incomplete and/or inaccurate.&rdquo;</em> &mdash; but it is a <code>RuntimeWarning</code>,
+           not an error. In a notebook, buried in Dask progress bars, it is very easy to miss, and
+           the numbers you get back look perfectly reasonable.</p>
+        <p><code>require_right_margin</code> defaults to <code>False</code>, so nothing stops you.
+           Either open the right catalog as a collection, or pass its <code>margin_cache</code>
+           explicitly &mdash; then turn the check on so it fails loudly if the margin ever goes
+           missing.</p>
       </div>
 
       <div class="snippet" data-setup="ztf-and-gaia" data-verify="run">
