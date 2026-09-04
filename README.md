@@ -38,6 +38,9 @@ Edit the HTML directly and reload. That's the whole workflow.
 
 ### Conventions worth keeping
 
+- **The sidebar is generated, not hand-written.** After adding or renaming a section,
+  run `python3 tools/sync_sidebar.py`. It rebuilds each page's sidebar from that page's
+  own headings, so the two can't drift; `check_markup.py` fails if they have.
 - **Every section has a hand-written `id`.** Links get pasted into Slack during hack days
   and should keep working. Never let an anchor be auto-generated.
 - **Snippets that trigger computation carry the `⚡ triggers computation` badge**, and

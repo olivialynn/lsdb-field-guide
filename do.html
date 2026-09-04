@@ -44,18 +44,23 @@
       <li class="is-sub"><a href="#load-columns">picking columns</a></li>
       <li><a href="#go-faster">go faster</a></li>
       <li class="is-sub"><a href="#faster-subset">cut it down first</a></li>
+      <li class="is-sub"><a href="#faster-columns">ask for fewer columns</a></li>
       <li class="is-sub"><a href="#faster-dask">start a Dask client</a></li>
+      <li class="is-sub"><a href="#faster-region">read from the copy nearest you</a></li>
       <li><a href="#examine">examine the catalog</a></li>
       <li class="is-sub"><a href="#examine-head">look at a few rows</a></li>
       <li class="is-sub"><a href="#examine-size">find out how big it is</a></li>
-      <li class="is-sub"><a href="#examine-stats">column statistics</a></li>
-      <li class="is-sub"><a href="#examine-partition">a single partition</a></li>
+      <li class="is-sub"><a href="#examine-stats">get column statistics without reading rows</a></li>
+      <li class="is-sub"><a href="#examine-partition">work with a single partition</a></li>
+      <li class="is-sub"><a href="#examine-plot">see where the data is</a></li>
       <li><a href="#modify">modify the catalog</a></li>
+      <li class="is-sub"><a href="#modify-search">select a region of sky</a></li>
       <li class="is-sub"><a href="#modify-query">filter rows</a></li>
-      <li class="is-sub"><a href="#modify-map">apply my own function</a></li>
+      <li class="is-sub"><a href="#modify-map">apply your own function</a></li>
       <li><a href="#nested">work with nested data</a></li>
-      <li class="is-sub"><a href="#nested-make">pack list columns</a></li>
-      <li class="is-sub"><a href="#nested-map">one value per object</a></li>
+      <li class="is-sub"><a href="#nested-make">pack list columns into a nested column</a></li>
+      <li class="is-sub"><a href="#nested-look">look inside one</a></li>
+      <li class="is-sub"><a href="#nested-map">compute one value per object</a></li>
       <li><a href="#crossmatch">crossmatch</a></li>
       <li class="is-sub"><a href="#crossmatch-basic">match two catalogs</a></li>
       <li class="is-sub"><a href="#crossmatch-margins">not get wrong answers</a></li>
@@ -150,10 +155,12 @@ ztf.all_columns</code></pre>
       <h2>go faster<a class="anchor" href="#go-faster">#</a></h2>
 
       <h3 id="faster-subset">cut it down first</h3>
-      <p>The single most useful habit: build your whole workflow against a small patch of sky,
-         confirm it does what you meant, then delete one line and run it on everything. A cone
-         search filters partitions <em>and</em> rows, so you are reading a handful of files
-         instead of thousands.</p>
+      <p>Write your whole workflow against one small region of sky. Check the results look the way
+         you expected. Then delete the search and run the same code on the full catalog. This is
+         the habit that saves the most time while you are still figuring out what you want, because
+         a mistake costs you seconds instead of an hour.</p>
+      <p>A region search narrows partitions <em>and</em> rows, so you read a handful of files
+         rather than thousands.</p>
 
       <div class="snippet" data-setup="gaia-loaded" data-verify="run">
         <div class="snippet__bar">
@@ -169,14 +176,14 @@ gaia = gaia.cone_search(ra=180.0, dec=10.0, radius_arcsec=3600)
          <code>polygon_search</code>, <code>moc_search</code>, and <code>order_search</code>.</p>
 
       <h3 id="faster-columns">ask for fewer columns</h3>
-      <p>Covered up in <a href="#load-columns">picking columns</a>, but it belongs here too: it is
-         usually the biggest speed-up available, and it costs one keyword argument.</p>
+      <p>Covered up in <a href="#load-columns">picking columns</a>, but it belongs here too. It is
+         the cheapest speed-up to apply &mdash; one keyword argument, no restructuring &mdash; and
+         unselected columns are never read at all.</p>
 
       <h3 id="faster-dask">start a Dask client</h3>
       <p>LSDB runs on Dask. Without a client you still get parallelism across your cores; with one
          you get a dashboard showing exactly what is running, how much memory each worker holds,
-         and which task is the bottleneck. At a hack day the dashboard is often how you discover
-         you asked for far more data than you meant to.</p>
+         and which task is the bottleneck.</p>
 
       <div class="snippet" data-setup="none" data-verify="skip" data-skip-reason="starts a cluster">
         <div class="snippet__bar">
@@ -188,7 +195,9 @@ client = Client(n_workers=4, threads_per_worker=1, memory_limit="auto")
 client  # displays a link to the dashboard</code></pre>
       </div>
 
-      <p>Prefer a context manager in a script, so the cluster shuts down even if the work fails:</p>
+      <p>In a script, a context manager guarantees the cluster shuts down even if the work fails.
+         In a notebook you usually want the opposite &mdash; one client kept alive across many
+         cells, closed with <code>client.close()</code> when you are done.</p>
 
       <div class="snippet" data-setup="none" data-verify="skip" data-skip-reason="starts a cluster">
         <div class="snippet__bar">
@@ -197,6 +206,12 @@ client  # displays a link to the dashboard</code></pre>
         </div>
         <pre><code>with Client(n_workers=4, threads_per_worker=1) as client:
     result = matched.compute()</code></pre>
+      </div>
+
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/tutorials/dask_client.html">Configuring a Dask client</a>
+        <a href="https://docs.lsdb.io/en/stable/tutorials/dask-cluster-tips.html">Dask cluster tips</a>
+        <a href="https://docs.lsdb.io/en/stable/tutorials/dask-messages-guide.html">Decoding alarming Dask messages</a>
       </div>
 
       <div class="callout">
@@ -317,6 +332,31 @@ gaia.plot_points()      # the objects (cut the catalog down first)</code></pre>
     <section class="section" id="modify">
       <h2>modify the catalog<a class="anchor" href="#modify">#</a></h2>
 
+      <h3 id="modify-search">select a region of sky</h3>
+      <p>Region searches are how you cut a catalog down spatially. Each runs in two stages: a
+         coarse filter that decides which partitions to open at all, then a fine filter on the rows
+         inside them. Pass <code>fine=False</code> to keep whole partitions and skip the second
+         stage.</p>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>gaia.cone_search(ra=180.0, dec=10.0, radius_arcsec=3600)
+gaia.box_search(ra=(179.0, 181.0), dec=(9.0, 11.0))
+gaia.polygon_search([(179.0, 9.0), (181.0, 9.0), (181.0, 11.0), (179.0, 11.0)])</code></pre>
+      </div>
+
+      <p>There are more: <code>moc_search</code> for an arbitrary sky region as a MOC,
+         <code>order_search</code> to select by partition order, and <code>id_search</code> to look
+         up known objects by identifier using an index catalog. You can also write your own.</p>
+
+      <div class="links">
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/region_selection.html">Notebook: region selection</a>
+        <a href="https://docs.lsdb.io/en/stable/reference/catalog_search.html">Search reference</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/custom_search.html">Notebook: custom searches</a>
+      </div>
+
       <h3 id="modify-query">filter rows</h3>
       <p><code>query()</code> takes a pandas-style expression string and stays lazy. Column names
          that aren't valid Python identifiers go in backticks; <code>@variable</code> is not
@@ -360,6 +400,8 @@ with_flux = gaia.map_partitions(add_flux)</code></pre>
       </div>
 
       <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.catalog.Catalog.map_partitions.html">map_partitions reference</a>
+        <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.catalog.Catalog.map_rows.html">map_rows reference</a>
         <a href="https://docs.lsdb.io/en/stable/reference/catalog_filtering.html">Filtering reference</a>
         <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/row_filtering.html">Notebook: row filtering</a>
         <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/map_partitions.html">Notebook: map_partitions</a>
@@ -459,7 +501,9 @@ mean_mags = lc.map_rows(
 matched.head()</code></pre>
       </div>
 
-      <div class="callout callout--warn" id="crossmatch-margins">
+      <h3 id="crossmatch-margins">not get wrong answers</h3>
+
+      <div class="callout callout--warn">
         <span class="callout__title">&#9888; Crossmatch without a margin and you get wrong answers, silently</span>
         <p>Objects near a partition boundary have their true nearest neighbour in the
            <em>next</em> partition. Without a margin catalog on the right-hand side, those matches

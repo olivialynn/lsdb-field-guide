@@ -7,6 +7,9 @@ import pathlib
 import re
 import sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+from tools.sync_sidebar import sync  # noqa: E402
+
 # Methods that execute. Listed here so the badge audit is mechanical rather than
 # something a reviewer has to remember.
 COMPUTES = (
@@ -65,6 +68,10 @@ def check() -> list[str]:
                 problems.append(f"{name}: snippet ({label}) computes but carries no badge")
             if badged and not executes:
                 problems.append(f"{name}: snippet ({label}) is badged but nothing executes")
+
+    # The sidebar must list every heading, in order, with the heading's own words.
+    for name in sync(write=False):
+        problems.append(f"{name}: sidebar is out of sync — run python3 tools/sync_sidebar.py")
 
     return problems
 
