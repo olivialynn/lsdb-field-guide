@@ -196,11 +196,20 @@ body {
 
 /* ---------- sections ---------- */
 
-.section { padding-top: 1rem; margin-bottom: 3.5rem; }
-.section > h2 {
-  font-size: 1.4rem; letter-spacing: -0.015em; margin: 0 0 0.6rem;
-  padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+/* The rule sits above the heading so it separates sections, rather than
+   underlining a title. h2 doubles its size gap over h3 (1.7 vs 1.1). */
+.section {
+  border-top: 1px solid var(--border);
+  padding-top: 2.25rem;
+  margin-bottom: 4.5rem;
 }
+.section > h2 {
+  font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em;
+  margin: 0 0 1.25rem;
+}
+/* Bind the heading to its own content: big space above the rule, less below
+   the title, so the section reads as one block rather than a floating label. */
+.section > h2 + h3 { margin-top: 1.5rem; }
 .section h3 {
   font-size: 1.1rem; font-weight: 650; letter-spacing: -0.005em;
   margin: 2.75rem 0 0.6rem;
@@ -208,7 +217,7 @@ body {
 .section p { max-width: 44rem; }
 .section ul { max-width: 44rem; }
 
-.anchor { color: var(--border); text-decoration: none; font-weight: 400; margin-left: 0.4rem; }
+.anchor { color: var(--border); text-decoration: none; font-weight: 400; font-size: 0.65em; margin-left: 0.5rem; }
 .section > h2:hover .anchor { color: var(--accent); }
 
 /* ---------- snippets ---------- */
