@@ -49,6 +49,13 @@ Edit the HTML directly and reload. That's the whole workflow.
   Check the badge whenever you touch a snippet — `.head()`, `.compute()`, `len()`, and
   the `plot_*` methods all execute.
 - **Snippets have no `>>>` prompts**, so selecting one gives you runnable code.
+- **`snippet__src` says "used in", not "from".** These snippets were written and
+  executed against live catalogs for this site; they are not copied out of the LSDB
+  notebooks. The link points at a notebook where the same operation appears in a
+  real workflow. Don't relabel it as provenance unless a snippet is genuinely lifted.
+- **Links live in the subsection they serve**, not in one pile at the end of the
+  section. Readers stop as soon as they have what they came for, so a link at the
+  bottom of a long section is a link most people never see.
 - **Snippets carry `data-setup` and `data-verify` attributes** for the verification
   harness. `data-verify="skip"` requires a `data-skip-reason`.
 

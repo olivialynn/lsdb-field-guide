@@ -135,6 +135,7 @@ ztf</code></pre>
       <div class="snippet" data-setup="ztf-loaded" data-verify="run">
         <div class="snippet__bar">
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/column_filtering.html">used in column_filtering.ipynb</a>
         </div>
         <pre><code># What am I getting by default, and what else is there?
 ztf.columns
@@ -188,6 +189,7 @@ gaia = gaia.cone_search(ra=180.0, dec=10.0, radius_arcsec=3600)
       <div class="snippet" data-setup="none" data-verify="skip" data-skip-reason="starts a cluster">
         <div class="snippet__bar">
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/dask_client.html">used in dask_client.ipynb</a>
         </div>
         <pre><code>from dask.distributed import Client
 
@@ -203,6 +205,7 @@ client  # displays a link to the dashboard</code></pre>
         <div class="snippet__bar">
           <span class="badge badge--hot">&#9889; triggers computation</span>
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/dask_client.html">used in dask_client.ipynb</a>
         </div>
         <pre><code>with Client(n_workers=4, threads_per_worker=1) as client:
     result = matched.compute()</code></pre>
@@ -228,8 +231,6 @@ client  # displays a link to the dashboard</code></pre>
 
       <div class="links">
         <a href="https://docs.lsdb.io/en/stable/tutorials/performance.html">Performance guide</a>
-        <a href="https://docs.lsdb.io/en/stable/tutorials/dask_client.html">Configuring a Dask client</a>
-        <a href="https://docs.lsdb.io/en/stable/tutorials/dask-messages-guide.html">Decoding alarming Dask messages</a>
         <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/scaling_workflows.html">Notebook: scaling workflows</a>
       </div>
     </section>
@@ -245,6 +246,7 @@ client  # displays a link to the dashboard</code></pre>
         <div class="snippet__bar">
           <span class="badge badge--hot">&#9889; triggers computation</span>
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/catalog_object.html">used in catalog_object.ipynb</a>
         </div>
         <pre><code>gaia.head()          # a handful of rows
 gaia.head(20)</code></pre>
@@ -295,6 +297,10 @@ gaia.per_partition_statistics()         # the same, broken down by partition</co
          filtered they describe what was there originally &mdash; LSDB warns you when that
          happens.</p>
 
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/reference/catalog_inspection.html">Inspection reference</a>
+      </div>
+
       <h3 id="examine-partition">use one partition</h3>
       <p>One partition is a normal, laptop-sized dataframe. It is the fastest way to try something
          out on real data before committing to the whole sky.</p>
@@ -316,17 +322,13 @@ gaia.get_partition(2, 108).compute()    # order 2, pixel 108</code></pre>
         <div class="snippet__bar">
           <span class="badge badge--hot">&#9889; triggers computation</span>
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/plotting.html">used in plotting.ipynb</a>
         </div>
         <pre><code>gaia.plot_pixels()      # the partitioning itself
 gaia.plot_coverage()    # which sky this catalog covers
 gaia.plot_points()      # the objects (cut the catalog down first)</code></pre>
       </div>
 
-      <div class="links">
-        <a href="https://docs.lsdb.io/en/stable/reference/catalog_inspection.html">Inspection reference</a>
-        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/catalog_object.html">Notebook: the Catalog object</a>
-        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/plotting.html">Notebook: plotting</a>
-      </div>
     </section>
 
     <section class="section" id="modify">
@@ -341,6 +343,7 @@ gaia.plot_points()      # the objects (cut the catalog down first)</code></pre>
       <div class="snippet" data-setup="gaia-loaded" data-verify="run">
         <div class="snippet__bar">
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/region_selection.html">used in region_selection.ipynb</a>
         </div>
         <pre><code>gaia.cone_search(ra=180.0, dec=10.0, radius_arcsec=3600)
 gaia.box_search(ra=(179.0, 181.0), dec=(9.0, 11.0))
@@ -365,11 +368,16 @@ gaia.polygon_search([(179.0, 9.0), (181.0, 9.0), (181.0, 11.0), (179.0, 11.0)])<
       <div class="snippet" data-setup="gaia-loaded" data-verify="run">
         <div class="snippet__bar">
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/row_filtering.html">used in row_filtering.ipynb</a>
         </div>
         <pre><code>bright = gaia.query("phot_g_mean_mag &lt; 19")
 
 limit = 18.5
 brighter = gaia.query(f"phot_g_mean_mag &lt; {limit}")</code></pre>
+      </div>
+
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/reference/catalog_filtering.html">Filtering reference</a>
       </div>
 
       <h3 id="modify-map">apply your own function</h3>
@@ -381,6 +389,7 @@ brighter = gaia.query(f"phot_g_mean_mag &lt; {limit}")</code></pre>
       <div class="snippet" data-setup="gaia-loaded" data-verify="run">
         <div class="snippet__bar">
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/map_partitions.html">used in map_partitions.ipynb</a>
         </div>
         <pre><code>def add_flux(df):
     df["flux"] = 10 ** (-0.4 * df["phot_g_mean_mag"])
@@ -402,10 +411,8 @@ with_flux = gaia.map_partitions(add_flux)</code></pre>
       <div class="links">
         <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.catalog.Catalog.map_partitions.html">map_partitions reference</a>
         <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.catalog.Catalog.map_rows.html">map_rows reference</a>
-        <a href="https://docs.lsdb.io/en/stable/reference/catalog_filtering.html">Filtering reference</a>
-        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/row_filtering.html">Notebook: row filtering</a>
-        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/map_partitions.html">Notebook: map_partitions</a>
       </div>
+
     </section>
 
     <section class="section" id="nested">
@@ -424,6 +431,7 @@ with_flux = gaia.map_partitions(add_flux)</code></pre>
       <div class="snippet" data-setup="none" data-verify="run">
         <div class="snippet__bar">
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/nestedframe.html">used in nestedframe.ipynb</a>
         </div>
         <pre><code>lc = lsdb.open_catalog(
     "https://data.lsdb.io/hats/ztf_dr22/ztf_lc",
@@ -438,12 +446,17 @@ lc = lc.nest_lists(
 lc.nested_columns          # ['lc']</code></pre>
       </div>
 
+      <div class="links">
+        <a href="https://nested-pandas.readthedocs.io/en/stable/">nested-pandas documentation</a>
+      </div>
+
       <h3 id="nested-look">look inside one</h3>
 
       <div class="snippet" data-setup="lc-nested" data-verify="run">
         <div class="snippet__bar">
           <span class="badge badge--hot">&#9889; triggers computation</span>
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/nestedframe.html">used in nestedframe.ipynb</a>
         </div>
         <pre><code>rows = lc.head(2)
 rows["lc"].nest.columns    # ['hmjd', 'mag', 'magerr']
@@ -457,6 +470,7 @@ rows["lc"].nest.to_flat()  # one row per epoch instead of per object</code></pre
       <div class="snippet" data-setup="lc-nested" data-verify="run">
         <div class="snippet__bar">
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/timeseries.html">used in timeseries.ipynb</a>
         </div>
         <pre><code>import numpy as np
 
@@ -474,11 +488,9 @@ mean_mags = lc.map_rows(
          results &mdash; so a many-to-one match stays one row per object.</p>
 
       <div class="links">
-        <a href="https://nested-pandas.readthedocs.io/en/stable/">nested-pandas documentation</a>
-        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/nestedframe.html">Notebook: nested frames</a>
-        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/timeseries.html">Notebook: time series</a>
         <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/ztf-alerts-sne.html">Notebook: ZTF supernova alerts</a>
       </div>
+
     </section>
 
     <section class="section" id="crossmatch">
@@ -492,6 +504,7 @@ mean_mags = lc.map_rows(
         <div class="snippet__bar">
           <span class="badge badge--hot">&#9889; triggers computation</span>
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/crossmatching.html">used in crossmatching.ipynb</a>
         </div>
         <pre><code>matched = ztf.crossmatch(
     gaia,
@@ -499,6 +512,10 @@ mean_mags = lc.map_rows(
     n_neighbors=1,
 )
 matched.head()</code></pre>
+      </div>
+
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.catalog.Catalog.crossmatch.html">crossmatch reference</a>
       </div>
 
       <h3 id="crossmatch-margins">not get wrong answers</h3>
@@ -521,6 +538,7 @@ matched.head()</code></pre>
       <div class="snippet" data-setup="ztf-loaded" data-verify="run">
         <div class="snippet__bar">
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/margins.html">used in margins.ipynb</a>
         </div>
         <pre><code>gaia = lsdb.open_catalog(
     "https://data.lsdb.io/hats/gaia_dr3/gaia",
@@ -536,6 +554,10 @@ matched = ztf.crossmatch(
       </div>
 
 
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/tutorials/margins.html">Margins, in depth</a>
+      </div>
+
       <h3 id="crossmatch-how">keep unmatched rows</h3>
       <p><code>how="inner"</code> (the default) keeps only objects that matched.
          <code>how="left"</code> keeps every row of the left catalog, filling in nulls where
@@ -545,6 +567,7 @@ matched = ztf.crossmatch(
       <div class="snippet" data-setup="ztf-and-gaia" data-verify="run">
         <div class="snippet__bar">
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/types_of_crossmatch.html">used in types_of_crossmatch.ipynb</a>
         </div>
         <pre><code>everything = ztf.crossmatch(gaia, radius_arcsec=1.0, how="left")
 
@@ -578,12 +601,9 @@ matched = ztf.crossmatch(gaia, algorithm=MyMatch)</code></pre>
       </div>
 
       <div class="links">
-        <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.catalog.Catalog.crossmatch.html">crossmatch reference</a>
-        <a href="https://docs.lsdb.io/en/stable/tutorials/margins.html">Margins, in depth</a>
-        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/crossmatching.html">Notebook: crossmatching</a>
-        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/des-gaia.html">Notebook: DES &times; Gaia</a>
+        <a href="https://docs.lsdb.io/en/stable/reference/crossmatch.html">Crossmatch algorithms reference</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/des-gaia.html">Notebook: DES &times; Gaia, end to end</a>
       </div>
-
 
     </section>
 
@@ -598,6 +618,7 @@ matched = ztf.crossmatch(gaia, algorithm=MyMatch)</code></pre>
         <div class="snippet__bar">
           <span class="badge badge--hot">&#9889; triggers computation</span>
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/exporting_results.html">used in exporting_results.ipynb</a>
         </div>
         <pre><code>result = bright.cone_search(ra=180.0, dec=10.0, radius_arcsec=600).compute()
 result.to_csv("my_result.csv")</code></pre>
@@ -613,6 +634,7 @@ result.to_csv("my_result.csv")</code></pre>
         <div class="snippet__bar">
           <span class="badge badge--hot">&#9889; triggers computation</span>
           <span class="snippet__label">python</span>
+          <a class="snippet__src" href="https://docs.lsdb.io/en/stable/tutorials/exporting_results.html">used in exporting_results.ipynb</a>
         </div>
         <pre><code>bright.write_catalog(
     "./my_catalogs/bright_gaia",
@@ -631,8 +653,8 @@ again = lsdb.open_catalog("./my_catalogs/bright_gaia")</code></pre>
 
       <div class="links">
         <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.catalog.Catalog.write_catalog.html">write_catalog reference</a>
-        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/exporting_results.html">Notebook: exporting results</a>
       </div>
+
     </section>
 
     <footer class="footer">

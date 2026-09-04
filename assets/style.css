@@ -229,16 +229,28 @@ body {
   border-bottom: 1px solid var(--border);
   background: var(--bg);
 }
-.snippet__label { font-size: 0.8rem; color: var(--muted); }
+.snippet__label { font-size: 0.8rem; color: var(--muted); margin-right: auto; }
 .snippet pre { margin: 0; padding: 0.9rem 1rem; overflow-x: auto; background: var(--code-bg); }
 .snippet code { font: 0.86rem/1.65 var(--mono); color: var(--code-text); }
 
 .copy {
-  margin-left: auto; border: 1px solid var(--border); background: var(--surface);
+  border: 1px solid var(--border); background: var(--surface);
   color: var(--muted); border-radius: 5px; padding: 0.2rem 0.55rem;
   font: 0.76rem var(--sans); cursor: pointer;
 }
 .copy:hover { color: var(--text); border-color: var(--accent); }
+
+/* Points at a notebook where this operation is used. Deliberately says "used in"
+   rather than "from": these snippets were written and run for this site, not
+   lifted out of the notebooks. */
+.snippet__src {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  color: var(--muted); font-size: 0.76rem; text-decoration: none; white-space: nowrap;
+}
+.snippet__src::before { content: "\25C6"; opacity: 0.5; font-size: 0.85em; }
+.snippet__src:hover { color: var(--accent); }
+
+@media (max-width: 40rem) { .snippet__src { display: none; } }
 .copy.is-done { color: var(--accent); border-color: var(--accent); }
 
 .output {
