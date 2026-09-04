@@ -46,21 +46,21 @@
       <li class="is-sub"><a href="#faster-subset">cut it down first</a></li>
       <li class="is-sub"><a href="#faster-columns">ask for fewer columns</a></li>
       <li class="is-sub"><a href="#faster-dask">start a Dask client</a></li>
-      <li class="is-sub"><a href="#faster-region">read from the copy nearest you</a></li>
+      <li class="is-sub"><a href="#faster-region">read the nearest copy</a></li>
       <li><a href="#examine">examine the catalog</a></li>
       <li class="is-sub"><a href="#examine-head">look at a few rows</a></li>
       <li class="is-sub"><a href="#examine-size">find out how big it is</a></li>
-      <li class="is-sub"><a href="#examine-stats">get column statistics without reading rows</a></li>
-      <li class="is-sub"><a href="#examine-partition">work with a single partition</a></li>
+      <li class="is-sub"><a href="#examine-stats">check column statistics</a></li>
+      <li class="is-sub"><a href="#examine-partition">use one partition</a></li>
       <li class="is-sub"><a href="#examine-plot">see where the data is</a></li>
       <li><a href="#modify">modify the catalog</a></li>
       <li class="is-sub"><a href="#modify-search">select a region of sky</a></li>
       <li class="is-sub"><a href="#modify-query">filter rows</a></li>
       <li class="is-sub"><a href="#modify-map">apply your own function</a></li>
       <li><a href="#nested">work with nested data</a></li>
-      <li class="is-sub"><a href="#nested-make">pack list columns into a nested column</a></li>
+      <li class="is-sub"><a href="#nested-make">nest list columns</a></li>
       <li class="is-sub"><a href="#nested-look">look inside one</a></li>
-      <li class="is-sub"><a href="#nested-map">compute one value per object</a></li>
+      <li class="is-sub"><a href="#nested-map">get one value per object</a></li>
       <li><a href="#crossmatch">crossmatch</a></li>
       <li class="is-sub"><a href="#crossmatch-basic">match two catalogs</a></li>
       <li class="is-sub"><a href="#crossmatch-margins">not get wrong answers</a></li>
@@ -221,7 +221,7 @@ client  # displays a link to the dashboard</code></pre>
            dashboard is mostly orange, you have too many workers, not too few.</p>
       </div>
 
-      <h3 id="faster-region">read from the copy nearest you</h3>
+      <h3 id="faster-region">read the nearest copy</h3>
       <p>Catalogs are mirrored across regions and providers. <code>s3://</code> endpoints generally
          outperform <code>https://</code>, and if you are working on a cluster that already holds a
          local copy, use that instead of pulling across the internet at all.</p>
@@ -278,7 +278,7 @@ Expect up to 37.2 GiB on DISK.</div>
 
       <p>That is the number worth checking before you reach for <code>compute()</code>.</p>
 
-      <h3 id="examine-stats">get column statistics without reading rows</h3>
+      <h3 id="examine-stats">check column statistics</h3>
       <p>HATS stores per-column minimum, maximum, and null counts in the parquet footers, so LSDB
          can report them across the whole catalog without touching a single row of data. This
          returns immediately even on a billion-row catalog.</p>
@@ -295,7 +295,7 @@ gaia.per_partition_statistics()         # the same, broken down by partition</co
          filtered they describe what was there originally &mdash; LSDB warns you when that
          happens.</p>
 
-      <h3 id="examine-partition">work with a single partition</h3>
+      <h3 id="examine-partition">use one partition</h3>
       <p>One partition is a normal, laptop-sized dataframe. It is the fastest way to try something
          out on real data before committing to the whole sky.</p>
 
@@ -416,7 +416,7 @@ with_flux = gaia.map_partitions(add_flux)</code></pre>
          object no matter how many epochs it has. See
          <a href="ask.html#what-is-hats">Ask</a> for what that means for the data model.</p>
 
-      <h3 id="nested-make">pack list columns into a nested column</h3>
+      <h3 id="nested-make">nest list columns</h3>
       <p>Plenty of catalogs ship light curves as parallel <em>list</em> columns &mdash; ZTF DR22
          gives you <code>hmjd</code>, <code>mag</code> and <code>magerr</code> as arrays.
          <code>nest_lists</code> folds those into one nested column you can work with as a unit.</p>
@@ -450,7 +450,7 @@ rows["lc"].nest.columns    # ['hmjd', 'mag', 'magerr']
 rows["lc"].nest.to_flat()  # one row per epoch instead of per object</code></pre>
       </div>
 
-      <h3 id="nested-map">compute one value per object</h3>
+      <h3 id="nested-map">get one value per object</h3>
       <p>This is the common shape: reduce each object's light curve to a number, and keep it
          beside the object. <code>map_rows</code> passes each row in, nested column included.</p>
 
