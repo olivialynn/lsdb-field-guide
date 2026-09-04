@@ -5,16 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ask — LSDB Field Guide</title>
 <meta name="description" content="Short answers to the foundational questions people ask about HATS and LSDB.">
+<link rel="icon" href="assets/img/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/style.css">
+<script>
+  // Applied before first paint so an explicit theme choice never flashes.
+  try { var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
 </head>
 <body>
 
 <header class="topbar">
-  <a class="topbar__brand" href="index.html">LSDB <span>Field Guide</span></a>
+  <a class="topbar__brand" href="index.html">
+    <img src="assets/img/lsdb-logo.webp" alt="" width="26" height="26">
+    LSDB <span>Field Guide</span>
+  </a>
   <nav class="topbar__nav">
     <a href="index.html">Do</a>
     <a href="ask.html" aria-current="page">Ask</a>
   </nav>
+  <div class="topbar__actions">
+    <button class="themetoggle" type="button" aria-label="Switch between light and dark" title="Switch between light and dark">
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+    </button>
+  </div>
 </header>
 
 <div class="shell">
@@ -30,7 +45,7 @@
   <main class="content">
 
     <div class="pagehead">
-      <h1>Questions people ask</h1>
+      <h1>Frequently asked questions</h1>
       <p>Short answers to the things that come up mid-session. Want to get something running
          instead? Start with <a href="index.html">Do</a>.</p>
     </div>

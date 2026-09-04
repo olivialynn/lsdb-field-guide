@@ -1,0 +1,67 @@
+"""Structural checks for the field guide. Run with: python3 tests/check_markup.py
+
+Deliberately dependency-free, so it works the same on a laptop as in CI.
+"""
+
+import pathlib
+import re
+import sys
+
+# Methods that execute. Listed here so the badge audit is mechanical rather than
+# something a reviewer has to remember.
+COMPUTES = (
+    ".head(", ".compute(", ".tail(", "len(", ".sample(",
+    ".plot_points(", ".plot_pixels(", ".plot_coverage(",
+    ".to_hats(", ".write_catalog(",
+)
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+
+def check() -> list[str]:
+    problems: list[str] = []
+    pages = {p.name: p.read_text() for p in ROOT.glob("*.html")}
+
+    for name, html in pages.items():
+        ids = set(re.findall(r'id="([^"]+)"', html))
+
+        # Anchors get pasted into Slack during hack days; they must resolve.
+        for href in re.findall(r'href="#([^"]+)"', html):
+            if href not in ids:
+                problems.append(f"{name}: #{href} has no matching id")
+
+        for href in re.findall(r'href="([^"#:]+\.html)', html):
+            if href not in pages:
+                problems.append(f"{name}: links to missing page {href}")
+
+        for src in re.findall(r'(?:src|href)="(assets/[^"]+)"', html):
+            if not (ROOT / src).exists():
+                problems.append(f"{name}: missing asset {src}")
+
+        for snippet in re.findall(r'<div class="snippet"[^>]*>.*?</pre>', html, re.S):
+            attrs = dict(re.findall(r'data-([a-z-]+)="([^"]*)"', snippet))
+            body = re.search(r"<pre><code>(.*?)</code>", snippet, re.S).group(1)
+            label = re.search(r'snippet__label">([^<]+)', snippet)
+            label = label.group(1) if label else "?"
+
+            if "setup" not in attrs or "verify" not in attrs:
+                problems.append(f"{name}: snippet ({label}) missing data-setup/data-verify")
+            if attrs.get("verify") == "skip" and not attrs.get("skip-reason"):
+                problems.append(f"{name}: skipped snippet ({label}) has no data-skip-reason")
+
+            # The badge must match reality in both directions: an unbadged snippet
+            # that computes misleads, and a badged one that doesn't cries wolf.
+            executes = any(call in body for call in COMPUTES)
+            badged = "badge--hot" in snippet
+            if executes and not badged:
+                problems.append(f"{name}: snippet ({label}) computes but carries no badge")
+            if badged and not executes:
+                problems.append(f"{name}: snippet ({label}) is badged but nothing executes")
+
+    return problems
+
+
+if __name__ == "__main__":
+    found = check()
+    print("\n".join(found) if found else "markup + badge audit pass")
+    sys.exit(1 if found else 0)

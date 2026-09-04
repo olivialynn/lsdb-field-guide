@@ -35,8 +35,11 @@ Edit the HTML directly and reload. That's the whole workflow.
 
 - **Every section has a hand-written `id`.** Links get pasted into Slack during hack days
   and should keep working. Never let an anchor be auto-generated.
-- **Every code snippet carries a compute badge** — `lazy` or `⚡ triggers computation`.
-  A snippet labelled `lazy` that actually computes is worse than no badge at all.
+- **Snippets that trigger computation carry the `⚡ triggers computation` badge**, and
+  nothing else carries a badge. There is deliberately no `lazy` badge: when almost every
+  snippet is lazy, saying so on each one is noise, and the loud badge stops being loud.
+  Check the badge whenever you touch a snippet — `.head()`, `.compute()`, `len()`, and
+  the `plot_*` methods all execute.
 - **Snippets have no `>>>` prompts**, so selecting one gives you runnable code.
 - **Snippets carry `data-setup` and `data-verify` attributes** for the verification
   harness. `data-verify="skip"` requires a `data-skip-reason`.

@@ -3,6 +3,22 @@
 (function () {
   "use strict";
 
+  // Theme toggle. The document starts on the system preference; clicking sets an
+  // explicit choice that outlives the session. The inline script in <head> applies
+  // the stored value before first paint so the page never flashes the wrong theme.
+  var toggle = document.querySelector(".themetoggle");
+  if (toggle) {
+    toggle.addEventListener("click", function () {
+      var root = document.documentElement;
+      var isDark = root.dataset.theme
+        ? root.dataset.theme === "dark"
+        : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      var next = isDark ? "light" : "dark";
+      root.dataset.theme = next;
+      try { localStorage.setItem("theme", next); } catch (e) { /* private mode */ }
+    });
+  }
+
   // Copy buttons. The snippet body is exactly what we hand to the clipboard,
   // which is why snippets are written without >>> prompts.
   document.querySelectorAll(".snippet").forEach(function (snippet) {
