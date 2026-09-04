@@ -39,9 +39,10 @@
     <ol>
       <li><a href="#start">get something on screen</a></li>
       <li><a href="#load-a-catalog">load a catalog</a></li>
-      <li class="is-sub"><a href="#load-finding">find one</a></li>
-      <li class="is-sub"><a href="#load-basic">open it</a></li>
-      <li class="is-sub"><a href="#load-columns">pick columns</a></li>
+      <li class="is-sub"><a href="#load-finding">finding</a></li>
+      <li class="is-sub"><a href="#load-basic">opening</a></li>
+      <li class="is-sub"><a href="#load-collection">opening a collection</a></li>
+      <li class="is-sub"><a href="#load-columns">picking columns</a></li>
       <li><a href="#crossmatch">crossmatch</a></li>
       <li class="is-sub"><a href="#crossmatch-basic">match two catalogs</a></li>
       <li class="is-sub"><a href="#crossmatch-margins">not get wrong answers</a></li>
@@ -81,8 +82,8 @@ gaia = lsdb.open_catalog(
 )
 
 # One square degree is small enough to compute immediately.
-patch = gaia.cone_search(ra=180.0, dec=10.0, radius_arcsec=3600)
-patch.plot_points()</code></pre>
+cone = gaia.cone_search(ra=180.0, dec=10.0, radius_arcsec=3600)
+cone.plot_points()</code></pre>
       </div>
 
       <p style="margin-bottom:0">That is the whole shape of LSDB: open something enormous lazily,
@@ -92,7 +93,7 @@ patch.plot_points()</code></pre>
     <section class="section" id="load-a-catalog">
       <h2>load a catalog<a class="anchor" href="#load-a-catalog">#</a></h2>
 
-      <h3 id="load-finding">Find one</h3>
+      <h3 id="load-finding">Finding</h3>
       <p><a href="https://data.lsdb.io/">data.lsdb.io</a> is the catalog browser: Gaia, ZTF, SDSS,
          2MASS, DES, and more, each with its row count, size on disk, and a copy-paste URL.
          Catalogs are mirrored in several regions &mdash; grab the one nearest you, and prefer an
@@ -104,7 +105,7 @@ patch.plot_points()</code></pre>
         <a href="https://docs.lsdb.io/en/stable/data-access/external.html">Other data centers</a>
       </div>
 
-      <h3 id="load-basic">Open one</h3>
+      <h3 id="load-basic">Opening</h3>
       <p><code>open_catalog</code> reads the catalog's metadata and nothing else. You get back a
          <code>Catalog</code> that knows its columns, types, and partitioning, but holds no rows.</p>
 
@@ -121,10 +122,16 @@ ztf = lsdb.open_catalog(
 ztf</code></pre>
       </div>
 
-      <p>Catalogs published as a <em>collection</em> bundle their margin and index catalogs alongside
-         the main one. Open the collection and the margin comes with it, attached at
-         <code>.margin</code> &mdash; which matters more than it sounds
-         (<a href="#crossmatch-margins">see below</a>).</p>
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.open_catalog.html">open_catalog reference</a>
+        <a href="https://docs.lsdb.io/en/stable/getting-started.html">Getting started</a>
+      </div>
+
+      <h3 id="load-collection">Opening a collection</h3>
+      <p>Some catalogs are published as a <em>collection</em>: the main catalog bundled together
+         with its margin and index catalogs. Open the collection and those come with it &mdash;
+         the margin arrives attached at <code>.margin</code>. When a catalog isn't published that
+         way, point <code>margin_cache</code> at the margin yourself.</p>
 
       <div class="snippet" data-setup="none" data-verify="run">
         <div class="snippet__bar">
@@ -138,12 +145,10 @@ ztf</code></pre>
 gaia.margin</code></pre>
       </div>
 
-      <div class="links">
-        <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.open_catalog.html">open_catalog reference</a>
-        <a href="https://docs.lsdb.io/en/stable/getting-started.html">Getting started</a>
-      </div>
+      <p>Worth doing as a habit: the margin is what stands between you and a
+         <a href="#crossmatch-margins">quietly incomplete crossmatch</a>.</p>
 
-      <h3 id="load-columns">Pick columns</h3>
+      <h3 id="load-columns">Picking columns</h3>
       <p>Every catalog defines a set of <em>default columns</em>, loaded when you don't ask for
          specific ones. That default exists to stop you accidentally pulling two hundred columns
          across the network. Name what you need and the rest is never read.</p>
