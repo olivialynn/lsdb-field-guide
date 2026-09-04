@@ -124,7 +124,7 @@ body {
   display: grid;
   grid-template-columns: 15rem minmax(0, 1fr);
   gap: 3rem;
-  max-width: 74rem;
+  max-width: 68rem;
   margin: 0 auto;
   padding: 2rem 1.5rem 6rem;
 }
@@ -164,19 +164,10 @@ body {
   font-size: 1.4rem; letter-spacing: -0.015em; margin: 0 0 0.6rem;
   padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
 }
-.sub {
-  display: grid;
-  grid-template-columns: 10rem minmax(0, 1fr);
-  gap: 1.75rem;
-  margin-top: 2.75rem;
+.section h3 {
+  font-size: 1.1rem; font-weight: 650; letter-spacing: -0.005em;
+  margin: 2.75rem 0 0.6rem;
 }
-.sub h3 {
-  margin: 0.15rem 0 0; align-self: start;
-  font-size: 0.95rem; font-weight: 650; line-height: 1.4;
-  color: var(--text);
-}
-.sub__body > *:first-child { margin-top: 0; }
-.sub__body > *:last-child { margin-bottom: 0; }
 .section p { max-width: 44rem; }
 .section ul { max-width: 44rem; }
 
@@ -229,9 +220,13 @@ body {
 }
 .callout p:first-child { margin-top: 0; }
 .callout p:last-child { margin-bottom: 0; }
-.callout__title { font-weight: 650; display: block; margin-bottom: 0.3rem; }
+.callout__title {
+  display: block; margin-bottom: 0.5rem;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--muted);
+}
 .callout--warn { background: var(--warn-bg); border-color: var(--warn-bd); border-left-width: 3px; color: var(--warn-tx); }
-.callout--warn .callout__title { color: var(--warn-tx); }
+.callout--warn .callout__title { color: var(--warn-tx); opacity: 0.95; }
 .callout--warn code { background: color-mix(in srgb, var(--warn-bd) 18%, transparent); }
 
 /* ---------- links out ---------- */
@@ -280,11 +275,6 @@ p code, li code, td code {
   .topbar { grid-template-columns: auto 1fr auto; padding: 0.6rem 0.9rem; gap: 0.6rem; }
   .topbar__brand span { display: none; }
   .topbar__nav a { padding: 0.35rem 1.1rem; }
-}
-
-@media (max-width: 62rem) {
-  .sub { grid-template-columns: 1fr; gap: 0.5rem; margin-top: 2.25rem; }
-  .sub h3 { font-size: 1rem; }
 }
 
 @media (max-width: 52rem) {
