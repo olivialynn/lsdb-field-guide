@@ -317,6 +317,20 @@ body {
 .figure svg { display: block; width: 100%; height: auto; }
 .figure figcaption { margin-top: 0.6rem; color: var(--muted); font-size: 0.85rem; }
 
+/* ---------- comparison tables ---------- */
+
+.tablewrap { overflow-x: auto; margin: 1.25rem 0; }
+.tablewrap table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+.tablewrap th, .tablewrap td {
+  text-align: left; padding: 0.55rem 0.8rem 0.55rem 0;
+  border-bottom: 1px solid var(--border); vertical-align: top;
+}
+.tablewrap th {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); font-weight: 700;
+}
+.tablewrap td:first-child { font-weight: 600; white-space: nowrap; }
+
 /* ---------- inline bits ---------- */
 
 a { color: var(--accent); }

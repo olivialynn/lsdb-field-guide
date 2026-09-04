@@ -38,10 +38,19 @@
   <nav class="sidebar" aria-label="On this page">
     <h2>Questions</h2>
     <ol>
+      <li><a href="#what-can-i-do">What can I do with LSDB?</a></li>
+      <li><a href="#why-hats">Why use HATS and LSDB?</a></li>
       <li><a href="#what-is-hats">What is HATS?</a></li>
       <li class="is-sub"><a href="#hats-healpix">It starts with HEALPix</a></li>
       <li class="is-sub"><a href="#hats-adaptive">Why adaptive tiling?</a></li>
       <li class="is-sub"><a href="#hats-on-disk">What it looks like on disk</a></li>
+      <li><a href="#what-is-a-collection">What is a Catalog Collection?</a></li>
+      <li><a href="#what-is-nested">What is a nested column?</a></li>
+      <li><a href="#nothing-happening">Why is nothing happening?</a></li>
+      <li class="is-sub"><a href="#nothing-kernel">Why did my kernel die?</a></li>
+      <li><a href="#download">Do I need to download the data?</a></li>
+      <li><a href="#pandas">How does this relate to pandas?</a></li>
+      <li><a href="#ecosystem">Which package do I need?</a></li>
       <li><a href="#more-help">Don't see your question?</a></li>
     </ol>
   </nav>
@@ -53,6 +62,94 @@
       <p>Short answers to the things that come up mid-session. Want to get something running
          instead? Start with <a href="do.html">Do</a>.</p>
     </div>
+
+    <section class="section" id="what-can-i-do">
+      <h2>What can I do with LSDB?<a class="anchor" href="#what-can-i-do">#</a></h2>
+
+      <p>LSDB is for analysing sky catalogs that are too big to download and too big to hold in
+         memory &mdash; hundreds of millions to billions of rows. Four things it is genuinely good
+         at:</p>
+
+      <ul>
+        <li><strong>Open a survey catalog without downloading it.</strong> You get the columns and
+            the sky you ask for, and nothing else.</li>
+        <li><strong>Cut it down</strong> by region of sky, by column, or by a filter expression
+            &mdash; before any data is read.</li>
+        <li><strong>Cross-match against another survey</strong>, at whatever scale, without
+            writing the partition-matching logic yourself.</li>
+        <li><strong>Run your own function over the whole sky in parallel</strong>, then write the
+            result back out as a catalog of your own.</li>
+      </ul>
+
+      <p>A whole workflow is usually one chain, and none of it reads data until you ask:</p>
+
+      <div class="snippet" data-setup="none" data-verify="run">
+        <div class="snippet__bar">
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>import lsdb
+
+ztf = lsdb.open_catalog(
+    "https://data.lsdb.io/hats/ztf_dr14/ztf_object",
+    columns=["ra", "dec", "mean_mag_r"],
+)
+gaia = lsdb.open_catalog(
+    "https://data.lsdb.io/hats/gaia_dr3/gaia",
+    margin_cache="https://data.lsdb.io/hats/gaia_dr3/gaia_10arcs",
+    columns=["ra", "dec", "phot_g_mean_mag"],
+)
+
+result = (
+    ztf.cone_search(ra=180.0, dec=10.0, radius_arcsec=3600)
+       .crossmatch(gaia, radius_arcsec=1.0, require_right_margin=True)
+       .query("mean_mag_r &lt; 19")
+)</code></pre>
+      </div>
+
+      <p>What it is <em>not</em>: a plotting library, a fitting library, or a replacement for
+         pandas. It gets you a manageable table out of an unmanageable one; what you do next is
+         ordinary Python.</p>
+
+      <div class="links">
+        <a href="do.html">Recipes for all of this</a>
+      </div>
+    </section>
+
+    <section class="section" id="why-hats">
+      <h2>Why use HATS and LSDB?<a class="anchor" href="#why-hats">#</a></h2>
+
+      <p>Because of one awkward fact: the interesting catalogs no longer fit anywhere convenient.
+         Gaia DR3 is about 1.8 billion rows. You cannot download it before lunch, and you cannot
+         load it into memory at all.</p>
+
+      <p>The usual escapes each give something up. Downloading a subset means deciding what you
+         need before you know. A cone-search service is excellent for a hundred objects and
+         hopeless for ten million. Neither lets you ask a question of the <em>whole</em> catalog.</p>
+
+      <p>HATS and LSDB take a different route, and it rests on one idea:
+         <strong>objects near each other on the sky live in the same file</strong>. Everything
+         follows from that.</p>
+
+      <ul>
+        <li><strong>Spatial questions read almost nothing.</strong> "Everything within a degree of
+            here" touches three files instead of thirty thousand.</li>
+        <li><strong>Cross-matching becomes tractable.</strong> Two catalogs tiled the same way can
+            be matched tile against overlapping tile, rather than comparing every row to every
+            other row.</li>
+        <li><strong>The work is embarrassingly parallel.</strong> Partitions are independent, so
+            every core, or every machine, can take one.</li>
+        <li><strong>The same code scales.</strong> What you prototype on a laptop over conference
+            wifi runs unchanged on a cluster.</li>
+      </ul>
+
+      <p>The cost is that the data has to be tiled that way in the first place. That is what HATS
+         is, and what <a href="#ecosystem">hats-import</a> does for data of your own.</p>
+
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/tutorials/performance.html">Performance guide</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/small_scale.html">Notebook: working at small scale</a>
+      </div>
+    </section>
 
     <section class="section" id="what-is-hats">
       <h2>What is HATS?<a class="anchor" href="#what-is-hats">#</a></h2>
@@ -143,9 +240,11 @@
       <div class="snippet" data-setup="none" data-verify="skip" data-skip-reason="illustrative directory listing">
         <div class="snippet__bar"><span class="snippet__label">on disk</span></div>
         <pre><code>gaia/
-├── properties              # what this catalog is
+├── hats.properties         # what this catalog is: rows, columns, provenance
 ├── partition_info.csv      # which pixels exist, at which orders
+├── skymap.fits             # coverage, for quick answers about where data is
 └── dataset/
+    ├── _metadata           # parquet footers for every file, in one place
     ├── Norder=2/Dir=0/Npix=51.parquet     # a sparse region, split twice
     ├── Norder=5/Dir=0/Npix=2341.parquet   # a dense region, split five times
     └── ...</code></pre>
@@ -162,6 +261,303 @@
       </div>
 
 
+    </section>
+
+    <section class="section" id="what-is-a-collection">
+      <h2>What is a Catalog Collection?<a class="anchor" href="#what-is-a-collection">#</a></h2>
+
+      <p>A <em>collection</em> is a main catalog published together with its supplementary tables,
+         described by a <code>collection.properties</code> file. Opening the collection gets you
+         all of it; opening the bare catalog gets you only the rows.</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Member</th><th>What it is for</th></tr></thead>
+          <tbody>
+            <tr><td>Main catalog</td><td>The rows themselves, tiled by HEALPix pixel.</td></tr>
+            <tr><td>Margin cache</td><td>A copy of the rows just outside each partition boundary, so
+                spatial operations don't miss objects at the edges. This is the one that affects
+                whether your answers are correct.</td></tr>
+            <tr><td>Index tables</td><td>A lookup from an identifier to the partition holding it, so
+                finding one object by ID doesn't require scanning the whole catalog.</td></tr>
+            <tr><td>Association tables</td><td>Precomputed links between two catalogs, so a common
+                join doesn't have to be recomputed each time.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The practical difference is one line. Open a collection and the margin arrives attached at
+         <code>.margin</code>; open a plain catalog and you must supply <code>margin_cache</code>
+         yourself, or quietly go without one.</p>
+
+      <div class="callout callout--warn">
+        <span class="callout__title">&#9888; Going without a margin is not an error</span>
+        <p>LSDB warns, but it will not stop you, and a margin-less cross-match returns results that
+           look entirely reasonable while being wrong along every partition edge. If you take one
+           thing from this page, take this one. There is more detail, and the fix, in
+           <a href="do.html#crossmatch-margins">Do</a>.</p>
+      </div>
+
+      <div class="links">
+        <a href="https://docs.lsdb.io/en/stable/data-access/hats.html">Collections and supplementary tables</a>
+        <a href="https://docs.lsdb.io/en/stable/tutorials/margins.html">Margins, in depth</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/index_table.html">Notebook: index tables</a>
+      </div>
+    </section>
+
+    <section class="section" id="what-is-nested">
+      <h2>What is a nested column?<a class="anchor" href="#what-is-nested">#</a></h2>
+
+      <p>Some data is one measurement per object &mdash; a position, a magnitude. Some is
+         <em>many</em> per object: a light curve, a set of detections, a spectrum. A nested column
+         holds that second kind, by putting a whole sub-table inside a single cell.</p>
+
+      <p>The point is that <strong>one row stays one object</strong>, no matter how many epochs it
+         has.</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 660 290" role="img" aria-labelledby="nested-fig">
+          <title id="nested-fig">Flat tables repeat the object once per observation; a nested column keeps one row per object with its observations held inside.</title>
+
+          <text x="14" y="22" style="fill: var(--muted); font: 600 13px var(--sans)">flat</text>
+          <text x="14" y="40" style="fill: var(--muted); font: 12px var(--sans)">one row per observation</text>
+          <g style="fill: var(--muted); font: 11px var(--mono)">
+            <text x="14" y="72">objectid</text><text x="110" y="72">mjd</text><text x="176" y="72">mag</text>
+          </g>
+          <line x1="14" y1="80" x2="240" y2="80" style="stroke: var(--border)"/>
+          <g style="fill: var(--text); font: 12px var(--mono)">
+            <text x="14" y="102">A</text><text x="110" y="102">1.0</text><text x="176" y="102">19.2</text>
+            <text x="14" y="126">A</text><text x="110" y="126">2.0</text><text x="176" y="126">19.4</text>
+            <text x="14" y="150">A</text><text x="110" y="150">3.0</text><text x="176" y="150">19.1</text>
+            <text x="14" y="174">B</text><text x="110" y="174">1.0</text><text x="176" y="174">20.0</text>
+            <text x="14" y="198">B</text><text x="110" y="198">2.0</text><text x="176" y="198">20.3</text>
+          </g>
+          <text x="14" y="236" style="fill: var(--muted); font: 12px var(--sans)">5 rows, 2 objects</text>
+          <text x="14" y="254" style="fill: var(--muted); font: 12px var(--sans)">objectid repeats</text>
+
+          <g style="stroke: var(--muted); fill: none; stroke-width: 1.5">
+            <line x1="280" y1="140" x2="340" y2="140"/>
+            <path d="M332 133 L340 140 L332 147"/>
+          </g>
+
+          <text x="380" y="22" style="fill: var(--muted); font: 600 13px var(--sans)">nested</text>
+          <text x="380" y="40" style="fill: var(--muted); font: 12px var(--sans)">one row per object</text>
+          <g style="fill: var(--muted); font: 11px var(--mono)">
+            <text x="380" y="72">objectid</text><text x="470" y="72">lc</text>
+          </g>
+          <line x1="380" y1="80" x2="646" y2="80" style="stroke: var(--border)"/>
+
+          <text x="380" y="112" style="fill: var(--text); font: 12px var(--mono)">A</text>
+          <rect x="466" y="88" width="180" height="62" rx="4" style="fill: var(--accent); opacity: 0.1"/>
+          <g style="fill: var(--muted); font: 10px var(--mono)">
+            <text x="476" y="104">mjd   mag</text>
+            <text x="476" y="120">1.0   19.2</text>
+            <text x="476" y="134">2.0   19.4</text>
+            <text x="476" y="146">3.0   19.1</text>
+          </g>
+
+          <text x="380" y="186" style="fill: var(--text); font: 12px var(--mono)">B</text>
+          <rect x="466" y="162" width="180" height="48" rx="4" style="fill: var(--accent); opacity: 0.1"/>
+          <g style="fill: var(--muted); font: 10px var(--mono)">
+            <text x="476" y="178">mjd   mag</text>
+            <text x="476" y="194">1.0   20.0</text>
+            <text x="476" y="206">2.0   20.3</text>
+          </g>
+
+          <text x="380" y="240" style="fill: var(--muted); font: 12px var(--sans)">2 rows, 2 objects</text>
+          <text x="380" y="258" style="fill: var(--muted); font: 12px var(--sans)">the light curve rides along</text>
+        </svg>
+        <figcaption>Flat tables repeat every object once per observation, so "how many objects?"
+          stops being a row count. Nested keeps the object as the unit, and cross-matching a
+          million objects stays a million-row problem rather than a hundred-million-row one.</figcaption>
+      </figure>
+
+      <p>A third shape sits in between and trips people up: <em>list columns</em>, where each cell
+         holds a bare array. ZTF DR22 ships light curves that way. Lists carry the values but not
+         the structure, so LSDB can turn them into a nested column with
+         <code>nest_lists</code> &mdash; after which the fields have names and can be worked with
+         as a table.</p>
+
+      <div class="links">
+        <a href="do.html#nested">Recipes for nested data</a>
+        <a href="https://nested-pandas.readthedocs.io/en/stable/">nested-pandas documentation</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/pre_executed/nestedframe.html">Notebook: nested frames</a>
+      </div>
+    </section>
+
+    <section class="section" id="nothing-happening">
+      <h2>Why is nothing happening?<a class="anchor" href="#nothing-happening">#</a></h2>
+
+      <p>Because nothing is supposed to be happening yet. LSDB is <em>lazy</em>: each operation
+         records what you want and returns immediately. No file is opened, no row is read. You are
+         building a plan, not running one.</p>
+
+      <p>That is why <code>open_catalog</code> on a billion-row survey returns instantly, and why
+         a cross-match of two catalogs takes no time at all until the moment you ask for the
+         answer.</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Returns instantly</th><th>Actually runs the work</th></tr></thead>
+          <tbody>
+            <tr><td>open_catalog</td><td>compute()</td></tr>
+            <tr><td>cone_search, query, crossmatch</td><td>head(), tail()</td></tr>
+            <tr><td>map_partitions, map_rows</td><td>len()</td></tr>
+            <tr><td>columns, dtypes, npartitions</td><td>plot_points(), plot_pixels()</td></tr>
+            <tr><td>estimate_size()</td><td>write_catalog()</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>On <a href="do.html">Do</a>, anything in the right-hand column is tagged
+         <span class="badge badge--hot">&#9889; triggers computation</span>.</p>
+
+      <h3 id="nothing-kernel">Why did my kernel die?</h3>
+      <p>The same reason, from the other side. <code>compute()</code> means "give me all of this,
+         in memory, now". If the catalog is a billion rows, that request is not slow, it is
+         impossible &mdash; and Python is killed for asking.</p>
+
+      <p>Three habits avoid it entirely:</p>
+      <ul>
+        <li><strong>Ask what it would cost first.</strong> <code>estimate_size()</code> prints the
+            expected memory without reading any data.</li>
+        <li><strong>Use <code>head()</code> to look.</strong> Looking at values and materialising
+            a result are different jobs.</li>
+        <li><strong>Cut down before computing.</strong> A cone search first, the full sky later.</li>
+      </ul>
+
+      <p>If work is genuinely running and you want to see it, start a
+         <a href="do.html#faster-dask">Dask client</a> &mdash; the dashboard shows exactly which
+         partitions are in flight and how much memory each worker is holding.</p>
+
+      <div class="links">
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/lazy_operations.html">Notebook: lazy operations</a>
+        <a href="https://docs.lsdb.io/en/stable/tutorials/dask-messages-guide.html">Decoding alarming Dask messages</a>
+      </div>
+    </section>
+
+    <section class="section" id="download">
+      <h2>Do I need to download the data?<a class="anchor" href="#download">#</a></h2>
+
+      <p>No &mdash; and for most catalogs you should not try. LSDB reads HATS catalogs directly
+         from <code>https://</code> and <code>s3://</code> endpoints, fetching only the pieces your
+         workflow actually touches.</p>
+
+      <p>Two things make that work. Because the catalog is tiled by sky position, a spatial filter
+         eliminates whole files before anything is opened. And because the files are parquet, the
+         reader pulls only the columns you named, using HTTP range requests rather than downloading
+         each file whole.</p>
+
+      <p>So <code>columns=[...]</code> and a cone search are not merely tidy &mdash; they are what
+         keeps the transfer small enough to work over conference wifi.</p>
+
+      <div class="callout">
+        <span class="callout__title">The unit of reading is a partition</span>
+        <p>Even one row means opening the file that contains it. Work that is scattered randomly
+           across the sky is therefore expensive, no matter how few rows it returns, whereas work
+           concentrated in one region is cheap. Spatially coherent access is the whole game.</p>
+      </div>
+
+      <p>A local copy is worth it when you are running the same heavy workflow repeatedly, or when
+         your cluster already hosts a mirror &mdash; in which case point LSDB at the local path and
+         nothing else changes. Otherwise, reading remotely is the default for a reason.</p>
+
+      <div class="links">
+        <a href="do.html#load-columns">Picking columns</a>
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/data-access/remote_data.html">Notebook: remote data access</a>
+        <a href="https://docs.lsdb.io/en/stable/data-access/datalsdb.html">Regions and access methods</a>
+      </div>
+    </section>
+
+    <section class="section" id="pandas">
+      <h2>How does this relate to pandas?<a class="anchor" href="#pandas">#</a></h2>
+
+      <p>Closely, and deliberately. A <code>Catalog</code> is meant to feel like a dataframe you
+         have not run yet, and <code>compute()</code> hands you a real one: a nested-pandas
+         <code>NestedFrame</code>, which is a subclass of <code>pandas.DataFrame</code>. Anything
+         you know how to do to a dataframe works on the result.</p>
+
+      <div class="snippet" data-setup="gaia-loaded" data-verify="run">
+        <div class="snippet__bar">
+          <span class="badge badge--hot">&#9889; triggers computation</span>
+          <span class="snippet__label">python</span>
+        </div>
+        <pre><code>import pandas as pd
+
+frame = gaia.cone_search(ra=180.0, dec=10.0, radius_arcsec=600).compute()
+
+isinstance(frame, pd.DataFrame)   # True
+frame.index.name                  # '_healpix_29'</code></pre>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>&nbsp;</th><th>pandas</th><th>LSDB</th></tr></thead>
+          <tbody>
+            <tr><td>When it runs</td><td>Immediately</td><td>When you compute</td></tr>
+            <tr><td>Where it lives</td><td>In memory</td><td>On disk or in the cloud, in partitions</td></tr>
+            <tr><td>The index</td><td>Whatever you choose</td><td>A spatial index, <code>_healpix_29</code></td></tr>
+            <tr><td>Row order</td><td>Yours to set</td><td>Spatial, and not yours to set</td></tr>
+            <tr><td>Custom functions</td><td><code>apply</code></td><td><code>map_partitions</code>, <code>map_rows</code></td></tr>
+            <tr><td>Size ceiling</td><td>Your RAM</td><td>Effectively none</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The habit that transfers worst is reaching for a global view &mdash; sorting the whole
+         catalog, or indexing into an arbitrary row. Those assume everything is in memory at once,
+         which is exactly the assumption LSDB is built to avoid. Filter first, compute second, and
+         be ordinary pandas from there.</p>
+
+      <div class="links">
+        <a href="do.html#save-compute">Pulling results into pandas</a>
+        <a href="https://nested-pandas.readthedocs.io/en/stable/">nested-pandas documentation</a>
+      </div>
+    </section>
+
+    <section class="section" id="ecosystem">
+      <h2>Which package do I need?<a class="anchor" href="#ecosystem">#</a></h2>
+
+      <p>Four names, overlapping enough to be confusing. They divide up cleanly once you see the
+         split: one is a file format, one analyses data in it, one creates it, and one is the
+         table type underneath.</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Name</th><th>What it is</th><th>You touch it when&hellip;</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><a href="https://hats.readthedocs.io/en/stable/">HATS</a></td>
+              <td>The file format &mdash; how a catalog is tiled and written &mdash; plus the
+                  library that reads and describes it.</td>
+              <td>Rarely, directly. LSDB uses it on your behalf.</td>
+            </tr>
+            <tr>
+              <td><a href="https://docs.lsdb.io">LSDB</a></td>
+              <td>The analysis library: open, filter, cross-match, map, write.</td>
+              <td>Almost always. This is the one you import.</td>
+            </tr>
+            <tr>
+              <td><a href="https://hats-import.readthedocs.io/en/stable/">hats-import</a></td>
+              <td>The converter, turning your own catalog into HATS.</td>
+              <td>When the data you want isn't published as HATS yet.</td>
+            </tr>
+            <tr>
+              <td><a href="https://nested-pandas.readthedocs.io/en/stable/">nested-pandas</a></td>
+              <td>The dataframe type that supports <a href="#what-is-nested">nested columns</a>.</td>
+              <td>Once you compute a result containing light curves.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>For a hack day the answer is almost always just <code>pip install lsdb</code>. The rest
+         arrive as dependencies, and you meet them only when you need them.</p>
+
+      <div class="links">
+        <a class="link--nb" href="https://docs.lsdb.io/en/stable/tutorials/import_catalogs.html">Notebook: importing your own catalog</a>
+        <a href="https://data.lsdb.io/">Catalogs already published as HATS</a>
+      </div>
     </section>
 
     <section class="section" id="more-help">
