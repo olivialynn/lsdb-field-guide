@@ -152,6 +152,7 @@ body {
 .pagehead { margin-bottom: 2.5rem; }
 .pagehead h1 { font-size: 2rem; letter-spacing: -0.02em; margin: 0 0 0.4rem; }
 .pagehead p { color: var(--muted); margin: 0; max-width: 42rem; }
+.pagehead p + p { margin-top: 0.7rem; }
 
 /* ---------- sections ---------- */
 

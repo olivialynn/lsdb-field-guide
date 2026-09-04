@@ -41,7 +41,6 @@
       <li><a href="#load-a-catalog">load a catalog</a></li>
       <li class="is-sub"><a href="#load-finding">finding</a></li>
       <li class="is-sub"><a href="#load-basic">opening</a></li>
-      <li class="is-sub"><a href="#load-collection">opening a collection</a></li>
       <li class="is-sub"><a href="#load-columns">picking columns</a></li>
       <li><a href="#crossmatch">crossmatch</a></li>
       <li class="is-sub"><a href="#crossmatch-basic">match two catalogs</a></li>
@@ -58,6 +57,8 @@
       <p>Copy-pasteable recipes for the things people actually do in their first hour with LSDB.
          Every snippet runs as written. Looking for the concepts underneath? Those live on
          <a href="ask.html">Ask</a>.</p>
+      <p>LSDB is lazy: nothing below actually runs until you ask it to. The snippets tagged
+         <span class="badge badge--hot">&#9889; triggers computation</span> are the ones that do.</p>
     </div>
 
     <section class="starter" id="start">
@@ -122,31 +123,18 @@ ztf = lsdb.open_catalog(
 ztf</code></pre>
       </div>
 
+      <div class="callout">
+        <span class="callout__title">Some catalogs come as collections</span>
+        <p>A <em>collection</em> bundles a catalog together with its margin and index catalogs, so
+           opening one brings the margin along at <code>.margin</code>. It matters when you
+           <a href="#crossmatch-margins">crossmatch</a> &mdash; which is where margins earn their
+           keep, and where the details live.</p>
+      </div>
+
       <div class="links">
         <a href="https://docs.lsdb.io/en/stable/reference/api/lsdb.open_catalog.html">open_catalog reference</a>
         <a href="https://docs.lsdb.io/en/stable/getting-started.html">Getting started</a>
       </div>
-
-      <h3 id="load-collection">Opening a collection</h3>
-      <p>Some catalogs are published as a <em>collection</em>: the main catalog bundled together
-         with its margin and index catalogs. Open the collection and those come with it &mdash;
-         the margin arrives attached at <code>.margin</code>. When a catalog isn't published that
-         way, point <code>margin_cache</code> at the margin yourself.</p>
-
-      <div class="snippet" data-setup="none" data-verify="run">
-        <div class="snippet__bar">
-          <span class="snippet__label">python</span>
-        </div>
-        <pre><code>gaia = lsdb.open_catalog(
-    "https://data.lsdb.io/hats/gaia_dr3/gaia",
-    margin_cache="https://data.lsdb.io/hats/gaia_dr3/gaia_10arcs",
-    columns=["ra", "dec", "source_id", "phot_g_mean_mag"],
-)
-gaia.margin</code></pre>
-      </div>
-
-      <p>Worth doing as a habit: the margin is what stands between you and a
-         <a href="#crossmatch-margins">quietly incomplete crossmatch</a>.</p>
 
       <h3 id="load-columns">Picking columns</h3>
       <p>Every catalog defines a set of <em>default columns</em>, loaded when you don't ask for
@@ -205,12 +193,18 @@ matched.head()</code></pre>
            missing.</p>
       </div>
 
-      <div class="snippet" data-setup="ztf-and-gaia" data-verify="run">
+      <div class="snippet" data-setup="ztf-loaded" data-verify="run">
         <div class="snippet__bar">
           <span class="snippet__label">python</span>
         </div>
-        <pre><code>matched = ztf.crossmatch(
-    gaia,                        # opened with margin_cache=... above
+        <pre><code>gaia = lsdb.open_catalog(
+    "https://data.lsdb.io/hats/gaia_dr3/gaia",
+    margin_cache="https://data.lsdb.io/hats/gaia_dr3/gaia_10arcs",
+    columns=["ra", "dec", "source_id", "phot_g_mean_mag"],
+)
+
+matched = ztf.crossmatch(
+    gaia,
     radius_arcsec=1.0,
     require_right_margin=True,   # raise instead of quietly under-matching
 )</code></pre>
