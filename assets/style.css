@@ -136,14 +136,28 @@ body {
 }
 .sidebar ol { list-style: none; margin: 0; padding: 0; }
 .sidebar li { margin: 0; }
-.sidebar a {
-  display: block; padding: 0.3rem 0 0.3rem 0.75rem;
-  border-left: 2px solid var(--border);
-  color: var(--muted); text-decoration: none; font-size: 0.92rem;
+/* Air between groups, so the eye lands on sections rather than scanning 31 lines. */
+.sidebar li:not(.is-sub) { margin-top: 1.15rem; }
+.sidebar li:first-child { margin-top: 0; }
+.sidebar a { display: block; text-decoration: none; }
+
+/* Section entries carry no rail: they are the things you scan for. */
+.sidebar li:not(.is-sub) > a {
+  padding: 0.2rem 0;
+  color: var(--text); font-weight: 650; font-size: 0.93rem;
+  letter-spacing: -0.005em;
 }
-.sidebar a:hover { color: var(--text); }
-.sidebar a.is-active { color: var(--accent); border-left-color: var(--accent); font-weight: 550; }
-.sidebar .is-sub a { padding-left: 1.5rem; font-size: 0.86rem; }
+.sidebar li:not(.is-sub) > a:hover,
+.sidebar li:not(.is-sub) > a.is-active { color: var(--accent); }
+
+/* Subsections hang off a rail, which now marks what belongs to what. */
+.sidebar .is-sub > a {
+  padding: 0.26rem 0 0.26rem 0.8rem;
+  border-left: 2px solid var(--border);
+  color: var(--muted); font-size: 0.85rem;
+}
+.sidebar .is-sub > a:hover { color: var(--text); border-left-color: var(--muted); }
+.sidebar .is-sub > a.is-active { color: var(--accent); border-left-color: var(--accent); font-weight: 550; }
 
 .content { min-width: 0; }
 
@@ -304,7 +318,11 @@ p code, li code, td code {
   .shell { grid-template-columns: 1fr; gap: 1.5rem; padding-top: 1.25rem; }
   .sidebar { position: static; max-height: none; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
   .sidebar ol { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-  .sidebar a { border-left: 0; padding: 0.25rem 0.6rem; border: 1px solid var(--border); border-radius: 100px; }
-  .sidebar a.is-active { border-color: var(--accent); }
+  .sidebar li:not(.is-sub) { margin-top: 0; }
+  .sidebar li:not(.is-sub) > a {
+    padding: 0.25rem 0.7rem; font-size: 0.85rem;
+    border: 1px solid var(--border); border-radius: 100px;
+  }
+  .sidebar li:not(.is-sub) > a.is-active { border-color: var(--accent); }
   .sidebar .is-sub { display: none; }
 }
